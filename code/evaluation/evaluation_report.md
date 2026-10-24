@@ -25,11 +25,13 @@ Field-level accuracy (positional):
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | 0.979 | 0.979 | 0.959 | 0.959 | 0.959 | 0.959 | 0.979 |
 
-All 518 evaluation rows pass the structural checks: exact header, sorted by `case_id`, valid JSON arrays,
-consecutive `step_no` from 1, findings and `COMPLETE` verifications cite evidence captured at or before
+All 518 evaluation rows pass the structural checks in `code/evaluation/structure.py`, which `code/main.py`
+and the evaluator print on every run: exact header, one row per request sorted by `case_id`, valid JSON
+arrays, consecutive `step_no` from 1, phases in order, only allowed operation/state pairs, `COMPLETE` cases
+hold only verifications, findings and `COMPLETE` verifications cite evidence captured at or before
 `audit_at`, remediation and post-remediation verification use an empty `evidence_id`.
 
-Output mix on the 518 evaluation requests: 355 INCOMPLETE, 153 COMPLETE, 10 NOT_APPLICABLE (3,265 steps).
+Output mix on the 518 evaluation requests: 355 INCOMPLETE, 153 COMPLETE, 10 NOT_APPLICABLE (3,270 steps).
 
 ### The three remaining sample misses
 
@@ -40,6 +42,25 @@ Output mix on the 518 evaluation requests: 355 INCOMPLETE, 153 COMPLETE, 10 NOT_
 | case_20 | `audit_record_5569` present | Same: not present in any participant file. |
 
 None of them can be recovered from participant-visible data without hard-coding labels.
+
+## Confidence tiers
+
+`python3 code/tools/risk_map.py` tags every case by how the engine tied the person to their deletion-job
+account (`--sample` adds the exact-row score per tier).
+
+| Tier | How the account is linked | Eval cases | COMPLETE / INCOMPLETE | Job-only steps | Samples (exact) |
+| --- | --- | ---: | ---: | ---: | ---: |
+| IDENTIFIER | the job submitted an account that an evidence file ties to the person by identifier | 238 | 76 / 162 | 59 | 14 (14) |
+| SINGLE | time window, reported-status filter and batch elimination leave one submission | 152 | 50 / 102 | 192 | 14 (12) |
+| FINGERPRINT | several submissions left; the job clock against the person's proven records picks one | 90 | 10 / 80 | 99 | 3 (3) |
+| GUESS | still tied; the submission closest to the usual 59-minute lead wins | 16 | 15 / 1 | 29 | 0 |
+| NONE | no deletion job in the stream; every record is linked by identifiers alone | 12 | 2 / 10 | 0 | 1 (0) |
+| NON_DELETION | the request does not authorize deletion | 10 | NOT_APPLICABLE | 0 | 0 |
+
+Job-only steps (379 of 3,270) sit on records that no identifier ties to the person: the job's account, or
+an action on the job's clock. They are right only when the tier's link is right. The two SINGLE sample
+misses are case_18 and case_20, whose missing record has nothing to do with the link. No sample case
+reaches the GUESS tier, so it has never been scored.
 
 ## Custom evaluation cases
 
@@ -70,6 +91,7 @@ change the engine, re-run. Scores are on the 32 samples.
 | 5 | Connector selectors stored inside SQL JSON rows were not used for linking; primary/replica rows captured together picked an arbitrary copy; adjacent batch cases one second apart collided | Selector keys for every record shape; replica ties resolved toward the copy that still exposes data (replication drift); nearest-clock attribution with fitted slot centres (unattributed job actions: 6 -> 2) | 0.990 | 0.906 |
 | 6 | Custom cases C5/C6 failed: the offline rules saw the deletion verb and missed the refusal | Multilingual keep/refusal patterns for pt/es/fr/ja/ko; Claude classifies intent first when available, with the rules as fallback | 0.990 | 0.906 |
 | 7 | `code/tools/risk_map.py` showed 26 evaluation cases whose account came from the closest-to-3540 s fallback. Two submissions often fit the half-minute job clock equally: on proven pairs with the answer hidden, 6 of 50 stayed tied | Callback-position tie-break in `jobs.py`: the k-th result callback after the status report sits (51.9 + 29.5(k-1)) mod 60 s after the submission. Same 50 proven pairs: 48 right, 2 tied, 0 wrong. Guessed cases 26 -> 16. Four evaluation rows changed one account step each: case_404 and case_406 swapped, case_410 now takes account_163 from its own callbacks, and case_411, still a guess, moves to account_2775. No sample case used the fallback, so sample scores are unchanged | 0.990 | 0.906 |
+| 8 | case_33, case_35, case_39, case_50 and case_55 ended with no account step. The September lookup log names each person's account, but it was captured after `audit_at`, so the record was dropped. All 22 incomplete samples verify the account, 19 of them with no finding on it | An incomplete case keeps the person's account as a `VERIFY_RECORD_ABSENT` step with empty evidence when only later captures show it. Only the account: search rows in the same situation stay out, since no sample backs them. Complete cases are untouched. Exactly those five rows gained one step (3,265 -> 3,270 steps); sample scores unchanged | 0.990 | 0.906 |
 
 Checks made on the 518 evaluation cases without labels (by reading `code/tools/explain_case.py` output for
 one or more cases of every evidence family: handover note, replica SQL, inventory SQL + lookup trace,
@@ -86,5 +108,7 @@ file was captured after its case's `audit_at`.
 - 16 evaluation cases in 8 batches have no proven job activity that separates the submissions left to
   them. The engine takes the submission closest to the usual 59-minute lead, which puts one or two account
   or job-action steps per case at risk. `python3 code/tools/risk_map.py` lists them.
+- 4 incomplete evaluation cases (case_52, case_53, case_61, case_63) have no account step: no capture at
+  any time and no deletion job names an account for them.
 - Screenshot text comes from local OCR; each screenshot's focus record is identified through the data
   catalog link, so OCR noise does not reach the answer.

@@ -364,3 +364,28 @@ branch=main
 repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
 worktree=main
 parent_agent=none
+
+## [2026-10-24T16:13:17Z] Structural checks in the evaluator; keep late-seen accounts
+
+User Prompt (verbatim, secrets redacted):
+yes move the structural checks into the evaluator so every run prints them. then next thing, i found a hole. run explain_case on case_33, 35, 39, 50 and 55. the engine knows which account is theirs (the september lookup log names it) but drops it because that capture is after audit_at, so those cases end up with no account step at all. the samples say otherwise - all 22 incomplete sample cases verify the account, 19 of them with no finding on it. so when the persons account is only seen in captures after audit_at, an incomplete case should still get its VERIFY_RECORD_ABSENT step with empty evidence, same as we already do for job linked accounts. only the account though, not the search rows in the same situation, nothing in the samples backs that. dont touch complete cases. run the evaluator, custom cases and main.py and confirm only those 5 cases changed. add the failures row, and put a short confidence tiers section in the evaluation report with the risk_map counts. commit, no push
+
+Agent Response Summary:
+Moved the structural checks into code/evaluation/structure.py; code/main.py and the evaluator now print them on every run and exit non-zero on failure (a deliberately broken copy of output.csv tripped all six planted faults). Confirmed the hole with explain_case: each of the five accounts appears only in evidence_01, captured 2026-09-15 after audit_at, and all 22 incomplete samples verify the account (19 without a finding). The engine now keeps the person's account (account_service, USER_PROFILE, seen only in later captures) as a VERIFY_RECORD_ABSENT step with empty evidence in incomplete cases only; search rows and complete cases are unchanged. Exactly case_33, 35, 39, 50 and 55 changed (one added step each, 3,265 -> 3,270 steps, status mix unchanged); samples, custom cases 6/6 and structural checks all pass. Added failures row 8, a Confidence tiers section with the risk_map counts, a known limit for 4 incomplete cases whose account no capture names (case_52, 53, 61, 63), and the two new commands in README.
+
+Actions:
+* ran code/tools/explain_case.py case_33 case_35 case_39 case_50 case_55 (and case_52 case_53 case_61 case_63)
+* checked dataset/sample_output.csv for account steps in incomplete cases
+* edited code/audit/engine.py (late-seen account kept in incomplete cases)
+* created code/evaluation/structure.py; edited code/evaluation/main.py (new --requests flag, checks printed) and code/main.py
+* edited code/evaluation/evaluation_report.md, README.md, code/tools/risk_map.py (NONE tag wording)
+* ran python3 code/evaluation/main.py --diff, code/evaluation/custom_cases.py, code/main.py, code/main.py --sample, code/tools/risk_map.py; diffed output.csv against the start of the turn
+* git commit, no push
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=main
+repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
+worktree=main
+parent_agent=none

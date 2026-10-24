@@ -165,6 +165,7 @@ class Auditor:
         if not user:
             return "COMPLETE", []
         items = []
+        late_accounts = []  # the person's account, seen only in captures after audit_at
         job_case = req.get("job_case", req["case_id"])  # custom test cases may reuse a real case's job
         for rid, system in self.subject_resources(user, job_case).items():
             latest, cat = self.current(rid, audit_at)
@@ -176,6 +177,10 @@ class Auditor:
                 rid == self.jobs.account.get(job_case, {}).get("resource_id")
             if latest is None and not from_job and required != "PRESENT":
                 # Only captures taken after audit_at know about this record; they cannot shape the answer.
+                # The account itself is the exception: an incomplete case still verifies it (below).
+                if system == "account_service" and cat == "USER_PROFILE" and self.by_rid[rid]:
+                    late_accounts.append(dict(system=system, rid=rid, cat=cat, required=required, actual=None,
+                                              ok=True, evidence=None))
                 continue
             actual = latest.state if latest else None
             if actual == "IDENTIFIABLE" and required == "ABSENT":
@@ -183,6 +188,10 @@ class Auditor:
             items.append(dict(system=system, rid=rid, cat=cat, required=required, actual=actual,
                               ok=compliant(actual, required), evidence=latest.src if latest else None))
         incomplete = any(not it["ok"] for it in items)
+        if incomplete:
+            # Every incomplete sample verifies the account after remediation (22/22). The verification is
+            # future work, so it needs no admissible capture; complete cases stay evidence-only.
+            items.extend(late_accounts)
         dominant = Counter(it["evidence"] for it in items if it["evidence"]).most_common(1)
         fallback = dominant[0][0] if dominant else ""
         for it in items:

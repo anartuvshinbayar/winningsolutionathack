@@ -11,7 +11,7 @@ Tags, in the order jobs.JobLinker tries them:
   FINGERPRINT   several submissions were left; the job-clock fingerprint against the person's proven records chose
                 (half-minute clock first, callback position as the tie-break)
   GUESS         still several; the engine took the submission closest to 3540 s before reported_at
-  NONE          no submission in the window at all
+  NONE          no submission in the window at all; every record comes from identifiers in evidence
   NON_DELETION  the request does not authorize deletion, so no job is looked for
 
 This script replays JobLinker._assign_accounts step by step and checks that its picks equal the engine's,

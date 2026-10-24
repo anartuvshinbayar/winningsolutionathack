@@ -21,7 +21,9 @@ echo "ANTHROPIC_API_KEY=..." > .env     # uncommitted; read at startup, never ov
 python3 code/main.py                        # writes output.csv (518 rows) and code/evaluation/usage_report.md
 python3 code/evaluation/main.py --diff      # scores the agent on the 32 labelled samples
 python3 code/evaluation/custom_cases.py     # our own evaluation cases
+python3 code/evaluation/structure.py        # structural checks on output.csv (main.py and the evaluator print them too)
 python3 code/tools/explain_case.py case_34  # everything the engine knows about one case
+python3 code/tools/risk_map.py              # how each case's account was linked, per confidence tier
 ```
 
 A full run takes about 3 seconds. Screenshot and PDF text is cached in `code/cache/media/`; to rebuild it

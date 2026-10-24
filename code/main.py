@@ -17,6 +17,7 @@ from audit import llm  # noqa: E402
 from audit.data import REPO_ROOT, read_csv  # noqa: E402
 from audit.engine import Auditor  # noqa: E402
 from audit.intent import classify, rule_verdict  # noqa: E402
+from evaluation.structure import report as check_structure  # noqa: E402
 from evaluation.usage import write_usage_report  # noqa: E402
 
 
@@ -70,8 +71,11 @@ def main():
     out = Path(args.out) if args.out else REPO_ROOT / ("sample_predictions.csv" if args.sample else "output.csv")
     rows, info = run(requests_file, out)
     print(f"wrote {len(rows)} rows to {out} in {info['seconds']}s (llm online: {info['llm_online']})")
+    ok = check_structure(out, requests_file)
     if not args.sample:
         write_usage_report(info)
+    if not ok:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

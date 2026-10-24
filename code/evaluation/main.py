@@ -4,6 +4,9 @@ python3 code/evaluation/main.py                # run the agent on the 32 samples
 python3 code/evaluation/main.py --diff         # also print every mismatching case
 python3 code/evaluation/main.py --pred P --gold G --requests R   # score any files
 
+Every run also prints the structural checks (code/evaluation/structure.py) for the scored file and for
+output.csv, and exits non-zero when either fails.
+
 Metrics
   status accuracy    deletion_status matches
   exact row          status and the whole steps array match
@@ -20,6 +23,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "code"))
+from evaluation.structure import report as check_structure  # noqa: E402
 
 FIELDS = ["step_no", "phase", "system_id", "resource_id", "operation", "state", "evidence_id"]
 
@@ -84,6 +88,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--pred")
     ap.add_argument("--gold", default=str(ROOT / "dataset" / "sample_output.csv"))
+    ap.add_argument("--requests", default="sample_deletion_requests.csv",
+                    help="requests file under dataset/ that the scored predictions answer")
     ap.add_argument("--diff", action="store_true")
     args = ap.parse_args()
     pred_path = args.pred
@@ -103,6 +109,13 @@ def main():
                 print("   extra   ", s)
             if not extra and not missing:
                 print("   (same steps, different order)")
+    print()
+    ok = check_structure(pred_path, args.requests)
+    submission = ROOT / "output.csv"
+    if submission.exists() and Path(pred_path).resolve() != submission.resolve():
+        ok = check_structure(submission, "deletion_requests.csv") and ok
+    if not ok:
+        sys.exit(1)
 
 
 if __name__ == "__main__":
