@@ -37,6 +37,11 @@ KEEP = [
     r"stop the promotional", r"(send|give) me a copy", r"copy of (the information|last year)", r"download my", r"portable format",
     r"what personal information you hold", r"misspelled", r"change the email address", r"replace it with",
     r"reset(ting)? the login", r"invoices",
+    # Portuguese, Spanish, French, Japanese, Korean refusals and access/correction requests
+    r"não (quero|desejo) (excluir|apagar|eliminar|fechar)", r"sem (excluir|apagar)", r"c[óo]pia d[oe]s? meus dados", r"corrigir",
+    r"no (quiero|deseo) (eliminar|borrar|cerrar)", r"sin (eliminar|borrar)", r"copia de mis datos", r"corregir",
+    r"ne (veux|souhaite) pas (supprimer|fermer)", r"sans supprimer", r"copie de mes données", r"corriger",
+    r"削除しないで", r"削除せず", r"삭제하지 ?(마|말)", r"삭제 없이",
 ]
 # Deletion wording across the languages seen in requests.
 DELETE = [

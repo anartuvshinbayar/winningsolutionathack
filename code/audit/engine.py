@@ -165,14 +165,15 @@ class Auditor:
         if not user:
             return "COMPLETE", []
         items = []
-        for rid, system in self.subject_resources(user, req["case_id"]).items():
+        job_case = req.get("job_case", req["case_id"])  # custom test cases may reuse a real case's job
+        for rid, system in self.subject_resources(user, job_case).items():
             latest, cat = self.current(rid, audit_at)
             cat = cat or DEFAULT_CATEGORY.get(system)
             if cat not in self.policy:
                 continue
             required = self.policy[cat]
-            from_job = rid in self.jobs.extra.get(req["case_id"], {}) or \
-                rid == self.jobs.account.get(req["case_id"], {}).get("resource_id")
+            from_job = rid in self.jobs.extra.get(job_case, {}) or \
+                rid == self.jobs.account.get(job_case, {}).get("resource_id")
             if latest is None and not from_job and required != "PRESENT":
                 # Only captures taken after audit_at know about this record; they cannot shape the answer.
                 continue

@@ -38,6 +38,7 @@ def score(pred, gold):
     status_ok = exact = seq_ok = seq_n = 0
     tp = fp = fn = 0
     field_hits = field_total = 0
+    per_field = {f: [0, 0] for f in FIELDS}
     failures = []
     for case_id, (g_status, g_steps) in gold.items():
         p_status, p_steps = pred.get(case_id, ("MISSING", []))
@@ -58,6 +59,9 @@ def score(pred, gold):
             b = g_steps[i] if i < len(g_steps) else {}
             field_hits += sum(a.get(f) == b.get(f) for f in FIELDS)
             field_total += len(FIELDS)
+            for f in FIELDS:
+                per_field[f][0] += a.get(f) == b.get(f)
+                per_field[f][1] += 1
         if not same:
             failures.append((case_id, p_status, g_status, pc - gc, gc - pc))
     prec = tp / (tp + fp) if tp + fp else 1.0
@@ -72,6 +76,7 @@ def score(pred, gold):
         "field_accuracy": field_hits / field_total if field_total else 1.0,
         "sequence_accuracy": seq_ok / seq_n if seq_n else 1.0,
         "sequence_cases": seq_n,
+        **{f"field_{f}": hits / total if total else 1.0 for f, (hits, total) in per_field.items()},
     }, failures
 
 

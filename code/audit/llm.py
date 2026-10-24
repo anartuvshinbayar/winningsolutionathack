@@ -9,9 +9,24 @@ import json
 import os
 from collections import defaultdict
 
-from .data import CACHE_DIR
+from .data import CACHE_DIR, REPO_ROOT
 
-MODEL = os.environ.get("AUDIT_MODEL", "claude-opus-5-5")
+
+def _load_dotenv():
+    """Read KEY=VALUE lines from an uncommitted .env at the repo root (never overrides the environment)."""
+    path = REPO_ROOT / ".env"
+    if not path.exists():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            name, value = line.split("=", 1)
+            os.environ.setdefault(name.strip(), value.strip().strip('"').strip("'"))
+
+
+_load_dotenv()
+
+MODEL =os.environ.get("AUDIT_MODEL", "claude-opus-5-5")
 EFFORT = os.environ.get("AUDIT_EFFORT", "low")
 # USD per million tokens (input, output), Claude API first-party rates.
 PRICES = {"claude-opus-5-5": (4.00, 20.00), "claude-sonnet-5-5": (2.00, 10.00), "claude-haiku-5-5": (0.10, 0.50)}
