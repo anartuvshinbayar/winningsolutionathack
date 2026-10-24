@@ -47,3 +47,44 @@ branch=main
 repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
 worktree=main
 parent_agent=none
+
+## [2026-10-24T13:29:00Z] Push first commit, study evidence formats before building engine
+
+User Prompt (verbatim, secrets redacted):
+go — push the commit and start building the engine
+
+Agent Response Summary:
+Pushed the first commit to origin/main. Started reverse-engineering the 32 sample answers against the evidence: confirmed step ordering rules, mapped every evidence format (SQL snapshots, six log styles joined by trace_id, JSON bundles, record-style exports, handover text, PDFs, PNG screenshots) and the activity-stream message templates. Wrote a local macOS Vision OCR tool for screenshots so image evidence can be read without paid API calls. Paused building when the user asked for a full explanation first.
+
+Actions:
+* git push -u origin main
+* read dataset/sample_output.csv, evidence files, system_activity.csv templates
+* wrote code/tools/ocr_macos.swift and tested it on one screenshot
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=main
+repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
+worktree=main
+parent_agent=none
+
+## [2026-10-24T13:29:00Z] Explain the challenge, data, and plan step by step
+
+User Prompt (verbatim, secrets redacted):
+so before, explain to me everything.
+and let me understand every step i mean like what we are doing and stuff
+
+Agent Response Summary:
+Paused coding and explained the challenge in plain words: what a deletion audit is, what the input files and evidence look like, how the output and grading work, a worked example from the samples (case_11), the traps found so far, the planned pipeline, where AI is used, and what is done vs next. Asked the user to decide on an API key before the AI parts are built.
+
+Actions:
+* no code changes; explanation only
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=main
+repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
+worktree=main
+parent_agent=none
