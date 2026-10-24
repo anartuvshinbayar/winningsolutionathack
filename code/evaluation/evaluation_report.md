@@ -62,6 +62,19 @@ an action on the job's clock. They are right only when the tier's link is right.
 misses are case_18 and case_20, whose missing record has nothing to do with the link. No sample case
 reaches the GUESS tier, so it has never been scored.
 
+## Screenshot readings: model vs rule
+
+`python3 code/tools/extract_media.py` prints, for every screen's focus record, the state the screen type
+implies next to the state Gemini read. They agree on 11 of 14. The rule is right on the other 3:
+
+| File | Record | Rule says | Gemini read | Why the rule holds |
+| --- | --- | --- | --- | --- |
+| evidence_18 (customer statement PDF) | `export_1842` | `USER_EXPORT`, present | order/finance record, present | The data catalog links `export_1842` (statement NST-2026-0718-1842) in `export_service`, so it is a user export and policy deletes it |
+| evidence_42 (customer reference screen) | `tombstone_17` | `ACCOUNT_TOMBSTONE`, redacted | `OTHER`, present | The screen shows only `user_17`: no name, email or phone. A stable reference with no direct identifiers is a redacted tombstone, which policy keeps |
+| evidence_58 (delivery correction PDF) | `support_001` | `SUPPORT_ATTACHMENT`, present | identifiable support message | The canonical answer for sample case_07 reports `support_001` as remaining (citing evidence_58), deletes it and verifies it absent: attachment treatment. A message would be redacted |
+
+None of the three changes an observation, because the state comes from the rule.
+
 ## Custom evaluation cases
 
 Defined in `code/evaluation/custom_cases.py`. Each reuses real evidence, changes one field of a request (or
@@ -114,7 +127,4 @@ file was captured after its case's `audit_at`.
   any time and no deletion job names an account for them.
 - Screenshots and PDFs are read by gemini-3.5-flash-lite (cached JSON per file). Each screen's focus record
   is identified through the data catalog link and its state comes from the screen type, so reading noise
-  does not reach the answer. The model's own state for the focus record differs from that rule on 3 of 14:
-  evidence_18 (customer statement read as an order/finance record), evidence_42 (retained reference read as
-  PRESENT/OTHER instead of a redacted tombstone) and evidence_58 (support_001 read as an identifiable support
-  message instead of an attachment). The rule decides; the model's view is printed by `extract_media.py`.
+  does not reach the answer. The model's own state is a cross-check (see below).

@@ -35,6 +35,8 @@ The engine exists and works. Do not rebuild it, improve it.
 | LLM usage in the last run | gemini-3.5-flash-lite, all from cache: intent 20 calls (398 texts, rules agree on all 550 requests) + screenshots/PDFs 15 calls; 47,128 input / 25,503 output / 0 thinking tokens, $0.0779 at list price, $0 on the free tier |
 | Reports | `code/evaluation/evaluation_report.md` and `usage_report.md` exist and are current |
 | Account-link tiers (`risk_map.py`) | 238 identifier · 152 one job candidate · 90 fingerprint · 16 guess · 12 no job · 10 not deletion |
+| Deadline | 2026-10-25 18:00 IST (12:30 UTC) |
+| Ship check | clean clone and unzipped `code.zip` next to `dataset/`, both in `python:3.10-slim` with `--network none` and no `.env`: output.csv byte-identical, evaluator, custom cases and structural checks pass; `code.zip` 40 entries, no dataset/.venv/.env/archives/keys |
 | Remote | 5 commits on `origin/main`; later work is local until "go" |
 
 The 3 sample misses (case_04, case_18, case_20) need record IDs that appear in no participant file. Don't chase them.
