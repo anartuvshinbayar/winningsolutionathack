@@ -26,6 +26,8 @@ def write_usage_report(info, requests=518):
         model_line,
         f"Intent verdicts from the model: {info.get('intent_decided', 0)} of {info.get('intent_distinct', 0)} distinct "
         "request texts; the multilingual rules decided the rest.",
+        f"Screenshot and PDF readings used: {info.get('media_readings', 0)} of {info.get('media_files', 0)} files, read by "
+        f"`{info.get('media_model')}` (cached in `code/cache/media/`).",
         "",
         "## Where models are used",
         "",
@@ -35,34 +37,37 @@ def write_usage_report(info, requests=518):
         f"(`{GEMINI_MODEL}`) when `GEMINI_API_KEY` is set: structured-output calls of up to {BATCH_SIZE} distinct request texts each. "
         "Multilingual rules are the fallback and cross-check every model verdict |",
         "| Evidence parsing, identity resolution, job attribution, policy, step planning | Deterministic Python, no model calls |",
-        "| Screenshot text | Local OCR (macOS Vision) at build time, cached in `code/cache/media/`; no model tokens |",
+        f"| Screenshots and PDFs | `{info.get('media_model')}` reads each file once, sent inline, with "
+        "`code/tools/extract_media.py`: every visible record as JSON (system, resource id, category, identifiers, "
+        "state, timestamps). Answers and their token usage are cached in `code/cache/media/<evidence_id>.json` |",
         "",
-        "Answers are cached on disk (`code/cache/llm_cache.json`) per model, prompt version and request text,",
-        "together with the usage of the call that produced them, so a re-run spends nothing. Token counts below",
-        "are the usage of the API calls behind every verdict used in this run, whether the call happened now or",
-        "was served from that cache.",
+        "Intent answers are cached in `code/cache/llm_cache.json` per model, prompt version and request text, and",
+        "screenshot/PDF readings in `code/cache/media/`, each with the usage of the call that produced it, so a",
+        "re-run spends nothing. Token counts below are the usage of the API calls behind every answer used in this",
+        "run, whether the call happened now or was served from those caches.",
         "",
         "## Totals",
         "",
-        "| Provider | Model | API calls this run | Calls served from cache | Input tokens | Output tokens | "
+        "| Provider | Model | Use | API calls this run | Calls served from cache | Input tokens | Output tokens | "
         "Thinking tokens | Total tokens | Est. cost at list price (USD) |",
-        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     tot = {"calls": 0, "cached": 0, "input_tokens": 0, "output_tokens": 0, "thinking_tokens": 0, "cost_usd": 0.0}
-    for model, m in sorted(usage.items()):
+    for m in usage:
         tokens = m["input_tokens"] + m["output_tokens"] + m["thinking_tokens"]
         thinking = f"{m['thinking_tokens']:,}" if m["provider"] == "gemini" else "in output"
-        lines.append(f"| {PROVIDER_LABEL.get(m['provider'], m['provider'])} | `{model}` | {m['calls']} | {m['cached']} | "
-                     f"{m['input_tokens']:,} | {m['output_tokens']:,} | {thinking} | {tokens:,} | ${m['cost_usd']:.4f} |")
+        lines.append(f"| {PROVIDER_LABEL.get(m['provider'], m['provider'])} | `{m['model']}` | {m['use']} | {m['calls']} | "
+                     f"{m['cached']} | {m['input_tokens']:,} | {m['output_tokens']:,} | {thinking} | {tokens:,} | "
+                     f"${m['cost_usd']:.4f} |")
         for k in tot:
             tot[k] += m[k]
     if not usage:
-        lines.append("| - | (none: no model key, rules decided intent) | 0 | 0 | 0 | 0 | 0 | 0 | $0.0000 |")
+        lines.append("| - | (none: no model key, rules decided intent) | - | 0 | 0 | 0 | 0 | 0 | 0 | $0.0000 |")
     total_tokens = tot["input_tokens"] + tot["output_tokens"] + tot["thinking_tokens"]
-    lines.append(f"| **Overall** | | **{tot['calls']}** | **{tot['cached']}** | **{tot['input_tokens']:,}** | "
+    lines.append(f"| **Overall** | | | **{tot['calls']}** | **{tot['cached']}** | **{tot['input_tokens']:,}** | "
                  f"**{tot['output_tokens']:,}** | **{tot['thinking_tokens']:,}** | **{total_tokens:,}** | "
                  f"**${tot['cost_usd']:.4f}** |")
-    free = sorted(m for m in usage if m in FREE_TIER)
+    free = sorted({m["model"] for m in usage if m["model"] in FREE_TIER})
     lines += [
         "",
         "## Per request",

@@ -1,0 +1,149 @@
+{
+ "file_id": "evidence_27",
+ "file_path": "evidence/documents/legal_retention_register_20260529.pdf",
+ "model": "gemini-3.5-flash-lite",
+ "prompt_version": "media-v1",
+ "result": {
+  "records": [
+   {
+    "category": "ORDER_OR_FINANCE_RECORD",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": "user_08"
+    },
+    "other_references": [
+     "Card dispute",
+     "USD 184.20",
+     "AR"
+    ],
+    "resource_id": "ORD-20264118",
+    "state": "PRESENT",
+    "system": "finance_operations",
+    "timestamps": [
+     "04 May 2026",
+     "04 May 2033"
+    ]
+   },
+   {
+    "category": "ORDER_OR_FINANCE_RECORD",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": "user_12"
+    },
+    "other_references": [
+     "Tax correction",
+     "EUR 72.40",
+     "ML"
+    ],
+    "resource_id": "ORD-20264207",
+    "state": "PRESENT",
+    "system": "finance_operations",
+    "timestamps": [
+     "09 May 2026",
+     "09 May 2033"
+    ]
+   },
+   {
+    "category": "ORDER_OR_FINANCE_RECORD",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": "user_17"
+    },
+    "other_references": [
+     "Chargeback",
+     "GBP 219.00",
+     "SK"
+    ],
+    "resource_id": "ORD-20264319",
+    "state": "PRESENT",
+    "system": "finance_operations",
+    "timestamps": [
+     "14 May 2026",
+     "14 May 2033"
+    ]
+   },
+   {
+    "category": "ORDER_OR_FINANCE_RECORD",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": "user_21"
+    },
+    "other_references": [
+     "Invoice inquiry",
+     "CAD 96.55",
+     "AR"
+    ],
+    "resource_id": "ORD-20264402",
+    "state": "PRESENT",
+    "system": "finance_operations",
+    "timestamps": [
+     "18 May 2026",
+     "18 May 2033"
+    ]
+   },
+   {
+    "category": "ORDER_OR_FINANCE_RECORD",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": "user_24"
+    },
+    "other_references": [
+     "Card dispute",
+     "AUD 311.80",
+     "ML"
+    ],
+    "resource_id": "ORD-20264511",
+    "state": "PRESENT",
+    "system": "finance_operations",
+    "timestamps": [
+     "23 May 2026",
+     "23 May 2033"
+    ]
+   },
+   {
+    "category": "ORDER_OR_FINANCE_RECORD",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": "user_29"
+    },
+    "other_references": [
+     "Tax record",
+     "USD 48.75",
+     "SK"
+    ],
+    "resource_id": "ORD-20264600",
+    "state": "PRESENT",
+    "system": "finance_operations",
+    "timestamps": [
+     "28 May 2026",
+     "28 May 2033"
+    ]
+   }
+  ],
+  "screen": "Disputed Orders and Tax Records Register"
+ },
+ "sha256": "0919c931c018565e82502050ee1026918c1baf210c8ba23d2386415dd46efb10",
+ "usage": {
+  "input_tokens": 1456,
+  "output_tokens": 1061,
+  "thinking_tokens": 0
+ }
+}

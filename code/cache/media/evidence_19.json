@@ -1,0 +1,39 @@
+{
+ "file_id": "evidence_19",
+ "file_path": "evidence/images/analytics_profile_view_20260713.png",
+ "model": "gemini-3.5-flash-lite",
+ "prompt_version": "media-v1",
+ "result": {
+  "records": [
+   {
+    "category": "ANALYTICS_PROFILE",
+    "identifiers": {
+     "email": "darwish.omar@icloud.com",
+     "email_hash": "",
+     "name": "Omar Darwish",
+     "phone": "",
+     "user_id": "user_20"
+    },
+    "other_references": [],
+    "resource_id": "analytics_7438",
+    "state": "IDENTIFIABLE",
+    "system": "pulse_analytics",
+    "timestamps": [
+     "13 Jul 2026 14:22 UTC",
+     "21 Apr 2026 09:14 UTC",
+     "13 Jul",
+     "08 Jul",
+     "30 Jun",
+     "22 Jun"
+    ]
+   }
+  ],
+  "screen": "pulse_analytics_users"
+ },
+ "sha256": "4e4cb259bc2010b622b0c53fe5872258f994fefc23452a83bb27473758693484",
+ "usage": {
+  "input_tokens": 1458,
+  "output_tokens": 223,
+  "thinking_tokens": 0
+ }
+}

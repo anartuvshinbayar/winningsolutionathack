@@ -1,0 +1,85 @@
+{
+ "file_id": "evidence_04",
+ "file_path": "evidence/images/account_admin_console_20260926.png",
+ "model": "gemini-3.5-flash-lite",
+ "prompt_version": "media-v1",
+ "result": {
+  "records": [
+   {
+    "category": "USER_PROFILE",
+    "identifiers": {
+     "email": "haruka.s1838@zoho.com",
+     "email_hash": "",
+     "name": "Haruka Sato",
+     "phone": "+81 90 7610 2507",
+     "user_id": "user_11"
+    },
+    "other_references": [
+     "user_11",
+     "account_5762",
+     "mobile_app",
+     "JP",
+     "Japanese",
+     "2-18-4 Kichijoji, Musashino, Tokyo 180-0004",
+     "Silver",
+     "CS-8538",
+     "support_9538"
+    ],
+    "resource_id": "account_5762",
+    "state": "PRESENT",
+    "system": "customer_operations",
+    "timestamps": [
+     "24 Sep 2026 09:14 JST",
+     "12 Jan 2024"
+    ]
+   },
+   {
+    "category": "ORDER_OR_FINANCE_RECORD",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "Ceramic coffee set"
+    ],
+    "resource_id": "ORD-20265762",
+    "state": "PRESENT",
+    "system": "order_management",
+    "timestamps": [
+     "12 Sep 2026",
+     "18 Sep 2026"
+    ]
+   },
+   {
+    "category": "ORDER_OR_FINANCE_RECORD",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "Travel backpack"
+    ],
+    "resource_id": "ORD-20265518",
+    "state": "PRESENT",
+    "system": "order_management",
+    "timestamps": [
+     "28 Aug 2026",
+     "03 Sep 2026"
+    ]
+   }
+  ],
+  "screen": "customer_operations"
+ },
+ "sha256": "d5c32ca5b6e1a2b4bbe9f5d41835ef1fd5d4f7061dab9067a4f9f88cea3c1861",
+ "usage": {
+  "input_tokens": 1472,
+  "output_tokens": 598,
+  "thinking_tokens": 0
+ }
+}

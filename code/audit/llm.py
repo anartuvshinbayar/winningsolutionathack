@@ -6,10 +6,14 @@ overrides the environment):
   otherwise GEMINI_API_KEY set -> Gemini (GEMINI_MODEL, default gemini-3.5-flash-lite) over the plain REST API
   otherwise, or AUDIT_OFFLINE set -> no model; callers fall back to rules
 
-Calls are batched: one call answers up to 20 inputs against a JSON schema. Every answer is cached per input
+Screenshots and PDFs are read by Gemini (GEMINI_VISION_MODEL, default gemini-3.8-flash), one call per file
+with the file sent inline; code/tools/extract_media.py keeps those answers in code/cache/media/.
+
+Intent calls are batched: one call answers up to 20 inputs against a JSON schema. Every answer is cached per input
 in code/cache/llm_cache.json together with the usage of the call that produced it, so a re-run spends
 nothing and still reports the tokens behind every answer it used. The Gemini path is stdlib only (urllib).
 """
+import base64
 import hashlib
 import json
 import os
@@ -38,7 +42,9 @@ _load_dotenv()
 
 ANTHROPIC_MODEL = os.environ.get("AUDIT_MODEL", "claude-opus-5-5")
 EFFORT = os.environ.get("AUDIT_EFFORT", "low")
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash-lite")  # intent; gemini-3.8-flash is for screenshots later
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash-lite")            # request intent
+GEMINI_VISION_MODEL = os.environ.get("GEMINI_VISION_MODEL", "gemini-3.8-flash")  # screenshots and PDFs
+MEDIA_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".pdf": "application/pdf"}
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 GEMINI_THINKING_LEVEL = "low"   # Gemini 3 thinking level (low / medium / high); thinking is billed as output
 MAX_ATTEMPTS = 6                # per call, for 429, transient 5xx answers and timeouts
@@ -46,8 +52,7 @@ TIMEOUT = 60                    # seconds per HTTP request
 
 # USD per million tokens (input, output including thinking). Anthropic first-party list prices; Gemini API
 # paid-tier standard list prices (ai.google.dev/gemini-api/docs/pricing, checked 2026-10-25). Google lists
-# gemini-3.8-flash (kept for the planned screenshot reading) at these rates through 2026-12-31 and at
-# $1.50 / $7.50 from 2027-01-01.
+# gemini-3.8-flash at these rates through 2026-12-31 and at $1.50 / $7.50 from 2027-01-01.
 PRICES = {
     "claude-opus-5-5": (4.00, 20.00), "claude-sonnet-5-5": (2.00, 10.00), "claude-haiku-5-5": (0.10, 0.50),
     "gemini-3.5-flash-lite": (0.30, 2.50), "gemini-3.8-flash": (0.75, 3.75),
@@ -57,26 +62,28 @@ CACHE_FILE = CACHE_DIR / "llm_cache.json"
 
 
 class Usage:
-    """Per-model counters for the run that produced output.csv."""
+    """Counters per (provider, model, use) for the run that produced output.csv."""
 
     def __init__(self):
-        self.models = defaultdict(lambda: {"provider": "", "calls": 0, "cached": 0, "input_tokens": 0,
-                                           "output_tokens": 0, "thinking_tokens": 0})
+        self.rows = defaultdict(lambda: {"calls": 0, "cached": 0, "input_tokens": 0, "output_tokens": 0,
+                                         "thinking_tokens": 0})
 
-    def record(self, provider, model, usage, cached):
-        m = self.models[model]
-        m["provider"] = provider
+    def record(self, provider, model, usage, cached, use="request intent"):
+        m = self.rows[(provider, model, use)]
         m["cached" if cached else "calls"] += 1
         m["input_tokens"] += usage.get("input_tokens", 0)
         m["output_tokens"] += usage.get("output_tokens", 0)
         m["thinking_tokens"] += usage.get("thinking_tokens", 0)
 
+    def models(self, use=None):
+        return sorted({model for (_p, model, u) in self.rows if use is None or u == use})
+
     def summary(self):
-        out = {}
-        for model, m in self.models.items():
+        out = []
+        for (provider, model, use), m in sorted(self.rows.items()):
             p_in, p_out = PRICES.get(model, (0.0, 0.0))
             cost = m["input_tokens"] * p_in / 1e6 + (m["output_tokens"] + m["thinking_tokens"]) * p_out / 1e6
-            out[model] = dict(m, cost_usd=round(cost, 6))
+            out.append(dict(m, provider=provider, model=model, use=use, cost_usd=round(cost, 6)))
         return out
 
 
@@ -272,21 +279,31 @@ def gemini_schema(schema):
     return out
 
 
-def _call_gemini(system, user, schema):
+def read_file(path, system, user, schema):
+    """One Gemini vision call on an image or PDF sent inline. Returns (parsed JSON or None, usage or None).
+    Not cached here: code/tools/extract_media.py stores the answer in code/cache/media/."""
+    if not os.environ.get("GEMINI_API_KEY") or os.environ.get("AUDIT_OFFLINE"):
+        return None, None
+    inline = {"mimeType": MEDIA_TYPES[path.suffix.lower()], "data": base64.b64encode(path.read_bytes()).decode("ascii")}
+    return _call_gemini(system, user, schema, model=GEMINI_VISION_MODEL, inline=inline)
+
+
+def _call_gemini(system, user, schema, model=None, inline=None):
+    parts = ([{"inlineData": inline}] if inline else []) + [{"text": user}]
     body = {
         "systemInstruction": {"parts": [{"text": system}]},
-        "contents": [{"role": "user", "parts": [{"text": user}]}],
+        "contents": [{"role": "user", "parts": parts}],
         # No temperature: Google recommends the default 1.0 for Gemini 3 (lower values can loop or degrade).
         # Reruns are reproducible through the cache instead. thinkingLevel replaces the older thinkingBudget;
         # sending both is a 400.
         "generationConfig": {
-            "maxOutputTokens": 8192,
+            "maxOutputTokens": 16384,
             "responseMimeType": "application/json",
             "responseSchema": gemini_schema(schema),
             "thinkingConfig": {"thinkingLevel": GEMINI_THINKING_LEVEL},
         },
     }
-    data = _post_gemini(body)
+    data = _post_gemini(body, model or GEMINI_MODEL)
     if data is None:
         return None, None
     meta = data.get("usageMetadata") or {}
@@ -305,9 +322,9 @@ def _call_gemini(system, user, schema):
         return None, usage
 
 
-def _post_gemini(body):
-    """POST with retries on 429 and transient 5xx. Returns the response JSON, or None after giving up."""
-    url = GEMINI_ENDPOINT.format(model=GEMINI_MODEL)
+def _post_gemini(body, model):
+    """POST with retries on 429, transient 5xx and timeouts. Returns the response JSON, or None after giving up."""
+    url = GEMINI_ENDPOINT.format(model=model)
     payload = json.dumps(body, ensure_ascii=False).encode("utf-8")
     for attempt in range(MAX_ATTEMPTS):
         request = urllib.request.Request(url, data=payload, method="POST", headers={

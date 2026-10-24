@@ -15,7 +15,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from audit import llm  # noqa: E402
+from audit import llm, media  # noqa: E402
 from audit.data import REPO_ROOT, read_csv  # noqa: E402
 from audit.engine import Auditor  # noqa: E402
 from audit.intent import classify_texts, rule_verdict  # noqa: E402
@@ -39,7 +39,7 @@ def classify_all():
     disagreements = [r["case_id"] for r in requests if r["request_text"] in decided
                      and verdicts[r["request_text"]] != rule_verdict(r["request_text"])]
     if decided:
-        source = ", ".join(sorted(llm.USAGE.models)) or "model"
+        source = ", ".join(llm.USAGE.models("request intent")) or "model"
         print(f"intent: {source} decided {len(decided)} of {len(verdicts)} distinct texts, rules the rest")
         if disagreements:
             for case_id in disagreements:
@@ -73,6 +73,10 @@ def run(requests_file, out_path):
                 "llm_online": llm.available(), "llm_provider": llm.provider(), "llm_model": llm.model_name(),
                 "intent_disagreements": intent_info["disagreements"], "intent_decided": intent_info["decided"],
                 "intent_distinct": intent_info["distinct"],
+                "media_readings": len(media._counted),
+                "media_model": ", ".join(sorted({media.load_reading(s)["model"] for s in media._counted})) or "none",
+                "media_files": sum(1 for r in read_csv("evidence_files.csv")
+                                   if Path(r["file_path"]).suffix.lower() in llm.MEDIA_TYPES),
                 "usage": llm.USAGE.summary()}
     return rows, run_info
 

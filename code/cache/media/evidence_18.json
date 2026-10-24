@@ -1,0 +1,42 @@
+{
+ "file_id": "evidence_18",
+ "file_path": "evidence/documents/account_history_report_20260718.pdf",
+ "model": "gemini-3.5-flash-lite",
+ "prompt_version": "media-v1",
+ "result": {
+  "records": [
+   {
+    "category": "ORDER_OR_FINANCE_RECORD",
+    "identifiers": {
+     "email": "ingrid.dahl@outlook.com",
+     "email_hash": "",
+     "name": "Ingrid Dahl",
+     "phone": "",
+     "user_id": "user_18"
+    },
+    "other_references": [
+     "statement NST-2026-0718-1842",
+     "order ORD-20261260",
+     "SKU LAMP-SD-04",
+     "Visa ending 4821",
+     "24 Fjordgata, 7010 Trondheim, Norway"
+    ],
+    "resource_id": "statement NST-2026-0718-1842",
+    "state": "PRESENT",
+    "system": "customer_statement",
+    "timestamps": [
+     "08 Jul 2026",
+     "10 Jul",
+     "14 Jul"
+    ]
+   }
+  ],
+  "screen": "customer_statement"
+ },
+ "sha256": "abe1877efe69fb5617a79c0d22df9113372e1e6804f8986b0fd408563ecca448",
+ "usage": {
+  "input_tokens": 1456,
+  "output_tokens": 274,
+  "thinking_tokens": 0
+ }
+}

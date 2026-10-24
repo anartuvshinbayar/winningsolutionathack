@@ -499,3 +499,29 @@ branch=main
 repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
 worktree=main
 parent_agent=none
+
+## [2026-10-24T18:04:31Z] Screenshots and PDFs read by Gemini; OCR removed
+
+User Prompt (verbatim, secrets redacted):
+yes do the screenshots and pdfs with gemini-3.8-flash. one call per file, send the png or pdf inline, ask for structured json: every record visible with its system, resource id, category, the identifiers shown (email, phone, name, user id, hash), its state and any timestamps. cache each answer in code/cache/media/<evidence_id>.json with its token usage so the usage report counts those 15 calls too. then make media.py read the json instead of the ocr text and compare - the observations for all 15 files have to come out the same as before, show me every difference before you accept it. if that holds, drop the swift ocr tool and the pdftotext path so nothing is mac only, keep extract_media.py as the way to rebuild the cache. run everything, update the readme architecture bit and the reports. also fix the checklist in claude.md, llm_cache.json and the media cache ship in code.zip since offline runs need them. commit, no push
+
+(sent mid-turn) 3.8 is too flaky right now. set GEMINI_VISION_MODEL=gemini-3.5-flash-lite for the screenshot run, it reads the screens fine, i checked one. rerun the extraction and the comparison with it, note the model in the usage report
+
+Agent Response Summary:
+Added llm.read_file (one Gemini call per file, PNG/PDF inline, JSON schema, GEMINI_VISION_MODEL default gemini-3.8-flash) and rewrote extract_media.py to write code/cache/media/<id>.json with model, prompt version, file hash and usage, plus a cross-check of the model's state against the screen-type rule. media.py now holds the reading prompt and schema and reads the JSON with the same selection rules as before. gemini-3.8-flash read 4 files and then hit its free-tier limit (20 requests/day, failed attempts count); per the user's follow-up all 15 were re-read with GEMINI_VISION_MODEL=gemini-3.5-flash-lite (15 calls, no retries). With the OCR text moved aside, observations for all 15 files are identical to the OCR baseline (0 differences), so the OCR text files and code/tools/ocr_macos.swift were removed. The model's own state differs from the screen-type rule on 3 of 14 focus records (evidence_18, 42, 58), reported but not used. Usage rows are now split by use; the report shows intent 20 calls and screenshots/PDFs 15 calls on gemini-3.5-flash-lite, 72,631 tokens, $0.0779 at list price, $0 on the free tier. output.csv unchanged (with key and offline), samples 32/32, F1 0.990, custom 6/6, structural checks pass. Updated README, CLAUDE.md (checklist ships both caches, layout, risks, state), evaluation report (row 10, known limits).
+
+Actions:
+* edited code/audit/llm.py, code/audit/media.py, code/audit/evidence.py (docstring), code/main.py, code/evaluation/usage.py; rewrote code/tools/extract_media.py
+* ran extract_media.py with gemini-3.8-flash (4 files, then daily quota), then GEMINI_VISION_MODEL=gemini-3.5-flash-lite --force (15 files)
+* scratch observation diff against the OCR baseline (0 of 15 differ); fake intent-API test
+* ran python3 code/main.py (with key and AUDIT_OFFLINE), code/evaluation/main.py --diff, code/evaluation/custom_cases.py
+* removed code/cache/media/*.txt and code/tools/ocr_macos.swift; edited README.md, CLAUDE.md, code/evaluation/evaluation_report.md
+* git commit, no push
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=main
+repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
+worktree=main
+parent_agent=none

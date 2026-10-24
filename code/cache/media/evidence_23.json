@@ -1,0 +1,101 @@
+{
+ "file_id": "evidence_23",
+ "file_path": "evidence/images/customer_export_console_20260618.png",
+ "model": "gemini-3.5-flash-lite",
+ "prompt_version": "media-v1",
+ "result": {
+  "records": [
+   {
+    "category": "USER_EXPORT",
+    "identifiers": {
+     "email": "marcus.lee@northstar.shop",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "export_1261"
+    ],
+    "resource_id": "customer_export_1261.zip",
+    "state": "PRESENT",
+    "system": "customer_download_center",
+    "timestamps": [
+     "20 Jun 14:18 UTC"
+    ]
+   },
+   {
+    "category": "USER_EXPORT",
+    "identifiers": {
+     "email": "ingrid.dahl@outlook.com",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "export_1260",
+     "Profile",
+     "Orders",
+     "Saved addresses"
+    ],
+    "resource_id": "customer_export_1260.zip",
+    "state": "PRESENT",
+    "system": "customer_download_center",
+    "timestamps": [
+     "18 Jun 2026 06:42 UTC",
+     "25 Jun 2026 06:42 UTC",
+     "06:46",
+     "06:45",
+     "06:43",
+     "06:42"
+    ]
+   },
+   {
+    "category": "USER_EXPORT",
+    "identifiers": {
+     "email": "sara.kim@northstar.shop",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "export_1259"
+    ],
+    "resource_id": "customer_export_1259.zip",
+    "state": "PRESENT",
+    "system": "customer_download_center",
+    "timestamps": [
+     "17 Jun 11:03 UTC"
+    ]
+   },
+   {
+    "category": "USER_EXPORT",
+    "identifiers": {
+     "email": "daniel.park@northstar.shop",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "export_1258"
+    ],
+    "resource_id": "customer_export_1258.zip",
+    "state": "PRESENT",
+    "system": "customer_download_center",
+    "timestamps": [
+     "16 Jun 09:27 UTC"
+    ]
+   }
+  ],
+  "screen": "Data exports"
+ },
+ "sha256": "18b95c1bd8b8956e40216df935498a9f3c181ea2a69b5cd6d3c0841a816d5557",
+ "usage": {
+  "input_tokens": 1484,
+  "output_tokens": 704,
+  "thinking_tokens": 0
+ }
+}

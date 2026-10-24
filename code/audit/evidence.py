@@ -95,7 +95,7 @@ def has_direct(ids):
 
 
 def text_identifiers(text):
-    """Emails and phone numbers embedded in free text (support messages, OCR)."""
+    """Emails and phone numbers embedded in free text (support messages)."""
     if not text:
         return {}
     found = {}

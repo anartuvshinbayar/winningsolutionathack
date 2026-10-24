@@ -1,0 +1,108 @@
+{
+ "file_id": "evidence_42",
+ "file_path": "evidence/images/deleted_account_reference_20260310.png",
+ "model": "gemini-3.5-flash-lite",
+ "prompt_version": "media-v1",
+ "result": {
+  "records": [
+   {
+    "category": "OTHER",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": "user_17"
+    },
+    "other_references": [
+     "ORD-20263245",
+     "CS-3245",
+     "CS-3378",
+     "FIN-7742"
+    ],
+    "resource_id": "user_17",
+    "state": "PRESENT",
+    "system": "account_platform",
+    "timestamps": [
+     "11 Jan 2024 08:42 UTC",
+     "10 Mar 2026 07:18 UTC"
+    ]
+   },
+   {
+    "category": "ORDER_OR_FINANCE_RECORD",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [],
+    "resource_id": "ORD-20263245",
+    "state": "PRESENT",
+    "system": "orders",
+    "timestamps": [
+     "11 Jan 2024 08:45"
+    ]
+   },
+   {
+    "category": "SUPPORT_MESSAGE",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [],
+    "resource_id": "CS-3245",
+    "state": "PRESENT",
+    "system": "support",
+    "timestamps": [
+     "14 Feb 2024 12:16"
+    ]
+   },
+   {
+    "category": "SUPPORT_MESSAGE",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [],
+    "resource_id": "CS-3378",
+    "state": "PRESENT",
+    "system": "support",
+    "timestamps": [
+     "03 Jun 2024 09:27"
+    ]
+   },
+   {
+    "category": "ORDER_OR_FINANCE_RECORD",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [],
+    "resource_id": "FIN-7742",
+    "state": "PRESENT",
+    "system": "finance",
+    "timestamps": [
+     "22 Aug 2024 15:03"
+    ]
+   }
+  ],
+  "screen": "Customer references"
+ },
+ "sha256": "68c28a72afd6ed184d5990d15c543f8a516face204f0360f732755a8a63c28be",
+ "usage": {
+  "input_tokens": 1484,
+  "output_tokens": 730,
+  "thinking_tokens": 0
+ }
+}

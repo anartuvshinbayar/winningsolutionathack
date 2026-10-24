@@ -1,0 +1,57 @@
+{
+ "file_id": "evidence_58",
+ "file_path": "evidence/documents/delivery_correction_attachment.pdf",
+ "model": "gemini-3.5-flash-lite",
+ "prompt_version": "media-v1",
+ "result": {
+  "records": [
+   {
+    "category": "SUPPORT_MESSAGE",
+    "identifiers": {
+     "email": "priya.raman@gmail.com",
+     "email_hash": "",
+     "name": "Priya Raman",
+     "phone": "+91 98765 73142",
+     "user_id": ""
+    },
+    "other_references": [
+     "CS-4827",
+     "ORD-20264827"
+    ],
+    "resource_id": "support_001",
+    "state": "IDENTIFIABLE",
+    "system": "support_service",
+    "timestamps": [
+     "18 Jun 2026",
+     "18 Jun 2026 10 24 UTC"
+    ]
+   },
+   {
+    "category": "SUPPORT_ATTACHMENT",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "CS-4827"
+    ],
+    "resource_id": "delivery_address_correction.pdf",
+    "state": "PRESENT",
+    "system": "support_service",
+    "timestamps": [
+     "12 Sep 2026 07 30 UTC"
+    ]
+   }
+  ],
+  "screen": "DELIVERY ADDRESS CORRECTION REQUEST"
+ },
+ "sha256": "0c58960759d4821b030b467d6fe531e83e38e7f50b3de3389a735521d0001f18",
+ "usage": {
+  "input_tokens": 1456,
+  "output_tokens": 364,
+  "thinking_tokens": 0
+ }
+}

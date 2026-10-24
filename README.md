@@ -41,13 +41,18 @@ python3 code/tools/explain_case.py case_34  # everything the engine knows about 
 python3 code/tools/risk_map.py              # how each case's account was linked, per confidence tier
 ```
 
-A full run takes about 3 seconds. Screenshot and PDF text is cached in `code/cache/media/`; to rebuild it
-run `python3 code/tools/extract_media.py --force` (macOS Vision OCR via `swift`, and `pdftotext`).
+A full run takes about 3 seconds and needs no network: model answers are replayed from `code/cache/`.
+Screenshots and PDFs are read once by Gemini (file sent inline, JSON schema) with
+`python3 code/tools/extract_media.py` (needs `GEMINI_API_KEY`; `--force` reads every file again), which writes
+`code/cache/media/<evidence_id>.json` with each call's token usage. The committed readings of all 15 files
+were made with `GEMINI_VISION_MODEL=gemini-3.5-flash-lite`; the default `gemini-3.8-flash` kept timing out on
+the free tier. Nothing in the pipeline needs macOS or a local OCR tool.
 
 ## How it works
 
 ```text
 evidence files ──► parsers ──► one observation table (who / what / state / when / which file)
+  (screenshots and PDFs: cached Gemini readings)
                                         │
 request ──► intent (model + rules) ──► identity (current + historical emails, phones, hashes, user_id)
                                         │
@@ -59,7 +64,7 @@ activity stream ──► job attribution ────┤   (links records that 
 | Module | Job |
 | --- | --- |
 | `code/audit/evidence.py` | Parses SQLite snapshots (incl. primary vs replica tables), six log formats (joined by trace id so lookup keys reach their result lines), snapshot bundles, service exports, record histories and the handover note into observations |
-| `code/audit/media.py` | Screenshots and PDFs: reads the cached text and identifies each screen's focus record through the data catalog's link activity |
+| `code/audit/media.py` | Screenshots and PDFs: reads Gemini's cached JSON reading of each file (every visible record with ids, identifiers, state), identifies the screen's focus record through the data catalog's link activity, and takes its state from the screen type; the model's own state is a cross-check |
 | `code/audit/identity.py` | Current and historical identifiers per user from `user_identities.csv` + `user_audit_log.csv`; case-insensitive emails, digit-normalised phones |
 | `code/audit/jobs.py` | Ties deletion-job activity to cases: the profile submission sits 44-75 min before `reported_at` and its result mirrors `reported_status`; later actions of the same job share its clock (fixed second offsets). Solves each batch of cases jointly |
 | `code/audit/engine.py` | Resolves each record's state from the newest admissible capture (replica copies that still expose data win ties), applies the policy, and plans findings → remediation → verification in the required order |

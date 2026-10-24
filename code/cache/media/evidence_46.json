@@ -1,0 +1,173 @@
+{
+ "file_id": "evidence_46",
+ "file_path": "evidence/images/object_storage_browser_20260213.png",
+ "model": "gemini-3.5-flash-lite",
+ "prompt_version": "media-v1",
+ "result": {
+  "records": [
+   {
+    "category": "SUPPORT_ATTACHMENT",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "delivery_confirmation_19.pdf"
+    ],
+    "resource_id": "delivery_confirmation_19.pdf",
+    "state": "PRESENT",
+    "system": "nimbus_object_storage",
+    "timestamps": [
+     "12 Feb 18:42",
+     "12 Feb 2026 18:42 UTC",
+     "12 Feb 18:42 · metadata update",
+     "12 Feb 18:39 · upload complete",
+     "12 Feb 18:38 · object created"
+    ]
+   },
+   {
+    "category": "SUPPORT_ATTACHMENT",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "delivery_confirmation_20.pdf"
+    ],
+    "resource_id": "delivery_confirmation_20.pdf",
+    "state": "PRESENT",
+    "system": "nimbus_object_storage",
+    "timestamps": [
+     "11 Feb 14:17"
+    ]
+   },
+   {
+    "category": "SUPPORT_ATTACHMENT",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "return_label_4821.pdf"
+    ],
+    "resource_id": "return_label_4821.pdf",
+    "state": "PRESENT",
+    "system": "nimbus_object_storage",
+    "timestamps": [
+     "10 Feb 09:33"
+    ]
+   },
+   {
+    "category": "SUPPORT_ATTACHMENT",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "return_label_4876.pdf"
+    ],
+    "resource_id": "return_label_4876.pdf",
+    "state": "PRESENT",
+    "system": "nimbus_object_storage",
+    "timestamps": [
+     "11 Feb 16:05"
+    ]
+   },
+   {
+    "category": "ORDER_OR_FINANCE_RECORD",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "invoice_NS-10493.pdf"
+    ],
+    "resource_id": "invoice_NS-10493.pdf",
+    "state": "PRESENT",
+    "system": "nimbus_object_storage",
+    "timestamps": [
+     "10 Feb 11:21"
+    ]
+   },
+   {
+    "category": "SUPPORT_ATTACHMENT",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "parcel_damage_7713.jpg"
+    ],
+    "resource_id": "parcel_damage_7713.jpg",
+    "state": "PRESENT",
+    "system": "nimbus_object_storage",
+    "timestamps": [
+     "12 Feb 10:08"
+    ]
+   },
+   {
+    "category": "USER_EXPORT",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "customer_export_2026-02-10.zip"
+    ],
+    "resource_id": "customer_export_2026-02-10.zip",
+    "state": "PRESENT",
+    "system": "nimbus_object_storage",
+    "timestamps": [
+     "10 Feb 23:14"
+    ]
+   },
+   {
+    "category": "USER_EXPORT",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "customer_export_2026-02-12.zip"
+    ],
+    "resource_id": "customer_export_2026-02-12.zip",
+    "state": "PRESENT",
+    "system": "nimbus_object_storage",
+    "timestamps": [
+     "12 Feb 21:56"
+    ]
+   }
+  ],
+  "screen": "nimbus_object_storage"
+ },
+ "sha256": "96e9a191380c29b9e0ab997007268c4cd6353cb6721ebd1ed4a32599d8d37e04",
+ "usage": {
+  "input_tokens": 1458,
+  "output_tokens": 1288,
+  "thinking_tokens": 0
+ }
+}

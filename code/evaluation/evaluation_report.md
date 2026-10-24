@@ -93,6 +93,7 @@ change the engine, re-run. Scores are on the 32 samples.
 | 7 | `code/tools/risk_map.py` showed 26 evaluation cases whose account came from the closest-to-3540 s fallback. Two submissions often fit the half-minute job clock equally: on proven pairs with the answer hidden, 6 of 50 stayed tied | Callback-position tie-break in `jobs.py`: the k-th result callback after the status report sits (51.9 + 29.5(k-1)) mod 60 s after the submission. Same 50 proven pairs: 48 right, 2 tied, 0 wrong. Guessed cases 26 -> 16. Four evaluation rows changed one account step each: case_404 and case_406 swapped, case_410 now takes account_163 from its own callbacks, and case_411, still a guess, moves to account_2775. No sample case used the fallback, so sample scores are unchanged | 0.990 | 0.906 |
 | 8 | case_33, case_35, case_39, case_50 and case_55 ended with no account step. The September lookup log names each person's account, but it was captured after `audit_at`, so the record was dropped. All 22 incomplete samples verify the account, 19 of them with no finding on it | An incomplete case keeps the person's account as a `VERIFY_RECORD_ABSENT` step with empty evidence when only later captures show it. Only the account: search rows in the same situation stay out, since no sample backs them. Complete cases are untouched. Exactly those five rows gained one step (3,265 -> 3,270 steps); sample scores unchanged | 0.990 | 0.906 |
 | 9 | First live model run: gemini-3.8-flash called case_28 ("Can you verify that my account was deleted?") not a deletion request, and as the model verdict wins, sample status fell to 31/32. Google's 3.8 capacity also timed out or returned 503 on most calls | One sentence in the intent prompt: asking to confirm or verify a deletion, or to finish one, is a deletion request (prompt version `intent-v3-batch`). Intent now runs on gemini-3.5-flash-lite (thinking level low, default temperature): 20 calls, 398 of 398 distinct texts answered, model and rules agree on all 550 requests, output.csv unchanged | 0.990 | 0.906 |
+| 10 | Screenshot and PDF text came from macOS-only OCR (`swift`) and `pdftotext`, so the cache could only be rebuilt on a Mac | Gemini reads each file once (sent inline, JSON schema: records, ids, identifiers, state, timestamps) into `code/cache/media/<evidence_id>.json` with its token usage; `media.py` reads the JSON. Observations for all 15 files are identical to the OCR ones; the swift tool and OCR text are removed. gemini-3.8-flash hit its free-tier daily quota after 4 files, so all 15 were read with gemini-3.5-flash-lite | 0.990 | 0.906 |
 
 Checks made on the 518 evaluation cases without labels (by reading `code/tools/explain_case.py` output for
 one or more cases of every evidence family: handover note, replica SQL, inventory SQL + lookup trace,
@@ -111,5 +112,9 @@ file was captured after its case's `audit_at`.
   or job-action steps per case at risk. `python3 code/tools/risk_map.py` lists them.
 - 4 incomplete evaluation cases (case_52, case_53, case_61, case_63) have no account step: no capture at
   any time and no deletion job names an account for them.
-- Screenshot text comes from local OCR; each screenshot's focus record is identified through the data
-  catalog link, so OCR noise does not reach the answer.
+- Screenshots and PDFs are read by gemini-3.5-flash-lite (cached JSON per file). Each screen's focus record
+  is identified through the data catalog link and its state comes from the screen type, so reading noise
+  does not reach the answer. The model's own state for the focus record differs from that rule on 3 of 14:
+  evidence_18 (customer statement read as an order/finance record), evidence_42 (retained reference read as
+  PRESENT/OTHER instead of a redacted tombstone) and evidence_58 (support_001 read as an identifiable support
+  message instead of an attachment). The rule decides; the model's view is printed by `extract_media.py`.

@@ -1,0 +1,103 @@
+{
+ "file_id": "evidence_14",
+ "file_path": "evidence/images/connector_management_console_20260807.png",
+ "model": "gemini-3.5-flash-lite",
+ "prompt_version": "media-v1",
+ "result": {
+  "records": [
+   {
+    "category": "DATA_FLOW",
+    "identifiers": {
+     "email": "jain.aditi@gmail.com",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "customer_analytics_warehouse",
+     "Data Platform"
+    ],
+    "resource_id": "data_flow_1121",
+    "state": "ACTIVE",
+    "system": "bridge_ops",
+    "timestamps": [
+     "07:59:42",
+     "07:58:10",
+     "07:56:44",
+     "07:55:02",
+     "07 Aug 2026 08:00 UTC"
+    ]
+   },
+   {
+    "category": "DATA_FLOW",
+    "identifiers": {
+     "email": "lucia-torres@gmail.com",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "customer_analytics_warehouse"
+    ],
+    "resource_id": "data_flow_9846",
+    "state": "ACTIVE",
+    "system": "bridge_ops",
+    "timestamps": [
+     "07:59:36",
+     "07 Aug 2026 08:00 UTC"
+    ]
+   },
+   {
+    "category": "DATA_FLOW",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "notification_service",
+     "order events"
+    ],
+    "resource_id": "",
+    "state": "ACTIVE",
+    "system": "bridge_ops",
+    "timestamps": [
+     "07:59:28",
+     "07 Aug 2026 08:00 UTC"
+    ]
+   },
+   {
+    "category": "DATA_FLOW",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "logistics_warehouse",
+     "shipment events"
+    ],
+    "resource_id": "",
+    "state": "ACTIVE",
+    "system": "bridge_ops",
+    "timestamps": [
+     "07:59:13",
+     "07 Aug 2026 08:00 UTC"
+    ]
+   }
+  ],
+  "screen": "bridgeops_connections"
+ },
+ "sha256": "e81fabc93ea1b5f4c918d934cdb2bea05d61737adfcc29f281494f5d8ec46355",
+ "usage": {
+  "input_tokens": 1458,
+  "output_tokens": 693,
+  "thinking_tokens": 0
+ }
+}

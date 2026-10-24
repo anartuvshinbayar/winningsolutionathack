@@ -1,0 +1,102 @@
+{
+ "file_id": "evidence_32",
+ "file_path": "evidence/images/backup_restore_console_20260429.png",
+ "model": "gemini-3.5-flash-lite",
+ "prompt_version": "media-v1",
+ "result": {
+  "records": [
+   {
+    "category": "BACKUP_ARCHIVE",
+    "identifiers": {
+     "email": "bluepeakco@outlook.com",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "ap-southeast-1"
+    ],
+    "resource_id": "backup_9291",
+    "state": "ACTIVE",
+    "system": "customer_platform_archives",
+    "timestamps": [
+     "26 Apr 02:00"
+    ]
+   },
+   {
+    "category": "BACKUP_ARCHIVE",
+    "identifiers": {
+     "email": "miller.logistics@company.com",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "us-west-2"
+    ],
+    "resource_id": "backup_9288",
+    "state": "ACTIVE",
+    "system": "customer_platform_archives",
+    "timestamps": [
+     "26 Apr 02:00"
+    ]
+   },
+   {
+    "category": "BACKUP_ARCHIVE",
+    "identifiers": {
+     "email": "areed1433@gmail.com",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "eu-west-1",
+     "s3://northstar-backups/customer-platform/weekly/segment-42-20260426.tar.zst",
+     "backup_9286",
+     "backup_9281"
+    ],
+    "resource_id": "backup_9287",
+    "state": "ACTIVE",
+    "system": "customer_platform_archives",
+    "timestamps": [
+     "26 Apr 02:00",
+     "26 Apr 2026 02:00 UTC",
+     "29 Mar 2026",
+     "26 Jul 2026",
+     "25 Apr",
+     "24 Apr",
+     "22 Apr"
+    ]
+   },
+   {
+    "category": "BACKUP_ARCHIVE",
+    "identifiers": {
+     "email": "summit-retail@company.com",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": ""
+    },
+    "other_references": [
+     "us-east-1"
+    ],
+    "resource_id": "backup_9286",
+    "state": "ACTIVE",
+    "system": "customer_platform_archives",
+    "timestamps": [
+     "26 Apr 02:00"
+    ]
+   }
+  ],
+  "screen": "Vault Recovery Manager"
+ },
+ "sha256": "2c246aa5843bec609b9ddfdf1154cd81e0fd61996f83954735e9856e48c18bf3",
+ "usage": {
+  "input_tokens": 1458,
+  "output_tokens": 732,
+  "thinking_tokens": 0
+ }
+}

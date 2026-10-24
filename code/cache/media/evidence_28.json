@@ -1,0 +1,46 @@
+{
+ "file_id": "evidence_28",
+ "file_path": "evidence/images/support_ticket_console_20260524.png",
+ "model": "gemini-3.5-flash-lite",
+ "prompt_version": "media-v1",
+ "result": {
+  "records": [
+   {
+    "category": "SUPPORT_MESSAGE",
+    "identifiers": {
+     "email": "kagyeman8947@fastmail.com",
+     "email_hash": "",
+     "name": "Kofi Agyeman",
+     "phone": "",
+     "user_id": "support_1034"
+    },
+    "other_references": [
+     "CS-5034",
+     "ORD-20265034",
+     "SWF-884103"
+    ],
+    "resource_id": "CS-5034",
+    "state": "IDENTIFIABLE",
+    "system": "helpline_console",
+    "timestamps": [
+     "09:12",
+     "09:13",
+     "09:28",
+     "09:35",
+     "22 May",
+     "23 May",
+     "24 May 07:46",
+     "24 May 08:15",
+     "26 May"
+    ]
+   }
+  ],
+  "screen": "helpline_console"
+ },
+ "sha256": "542b7aec17e6b2f38827896e7eb52c70e4bfaaca22433621be1f80f54884e944",
+ "usage": {
+  "input_tokens": 1472,
+  "output_tokens": 284,
+  "thinking_tokens": 0
+ }
+}

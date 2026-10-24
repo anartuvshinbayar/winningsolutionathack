@@ -1,0 +1,38 @@
+{
+ "file_id": "evidence_55",
+ "file_path": "evidence/documents/security_retention_extract.pdf",
+ "model": "gemini-3.5-flash-lite",
+ "prompt_version": "media-v1",
+ "result": {
+  "records": [
+   {
+    "category": "SECURITY_AUDIT_LOG",
+    "identifiers": {
+     "email": "",
+     "email_hash": "",
+     "name": "",
+     "phone": "",
+     "user_id": "user_03"
+    },
+    "other_references": [
+     "CJX-20260905-0630"
+    ],
+    "resource_id": "audit_record_003",
+    "state": "PRESENT",
+    "system": "compliance_journal",
+    "timestamps": [
+     "05 Sep 2026 06 30 UTC",
+     "25 Aug 2026 04 03 UTC",
+     "25 Aug 2027 04 03 UTC"
+    ]
+   }
+  ],
+  "screen": "compliance_journal"
+ },
+ "sha256": "8a6428a899dc8d0769048c8e6f6db70c614fe65fd1e0bb87a43c7927c27ecdda",
+ "usage": {
+  "input_tokens": 924,
+  "output_tokens": 220,
+  "thinking_tokens": 0
+ }
+}
