@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from audit.intent import BATCH_SIZE
-from audit.llm import EFFORT, FREE_TIER, GEMINI_THINKING_BUDGET, PRICES
+from audit.llm import EFFORT, FREE_TIER, GEMINI_MODEL, GEMINI_THINKING_LEVEL, PRICES
 
 REPORT = Path(__file__).with_name("usage_report.md")
 PROVIDER_LABEL = {"anthropic": "Anthropic", "gemini": "Google (Gemini API)"}
@@ -31,8 +31,8 @@ def write_usage_report(info, requests=518):
         "",
         "| Stage | Model use |",
         "| --- | --- |",
-        "| Request intent (deletion vs not, any language) | Claude when `ANTHROPIC_API_KEY` is set, else Gemini 2.5 Flash "
-        f"when `GEMINI_API_KEY` is set: structured-output calls of up to {BATCH_SIZE} distinct request texts each. "
+        "| Request intent (deletion vs not, any language) | Claude when `ANTHROPIC_API_KEY` is set, else Gemini "
+        f"(`{GEMINI_MODEL}`) when `GEMINI_API_KEY` is set: structured-output calls of up to {BATCH_SIZE} distinct request texts each. "
         "Multilingual rules are the fallback and cross-check every model verdict |",
         "| Evidence parsing, identity resolution, job attribution, policy, step planning | Deterministic Python, no model calls |",
         "| Screenshot text | Local OCR (macOS Vision) at build time, cached in `code/cache/media/`; no model tokens |",
@@ -94,9 +94,10 @@ def write_usage_report(info, requests=518):
         "",
         "Anthropic first-party list prices; Claude runs at effort `" + EFFORT + "` and counts thinking inside its output",
         "tokens. Gemini prices are the Gemini API paid-tier standard list prices (ai.google.dev/gemini-api/docs/pricing,",
-        f"checked 2026-10-25). Gemini reports thinking separately (`thoughtsTokenCount`, budget {GEMINI_THINKING_BUDGET} per",
-        "call) and bills it at the output rate. The Gemini API free tier bills $0; the estimates above show what the",
-        "same tokens would cost on the paid tier.",
+        "checked 2026-10-25); Google lists `gemini-3.8-flash` at these rates through 2026-12-31 and at $1.50 / $7.50 from",
+        f"2027-01-01. Gemini reports thinking separately (`thoughtsTokenCount`, thinking level `{GEMINI_THINKING_LEVEL}`) and",
+        "bills it at the output rate. The Gemini API free tier bills $0; the estimates above show what the same tokens",
+        "would cost on the paid tier.",
         "",
         f"Rule/model intent disagreements in this run: {', '.join(info['intent_disagreements']) or 'none'}.",
         "",

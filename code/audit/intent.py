@@ -8,7 +8,7 @@ import re
 
 from . import llm
 
-PROMPT_VERSION = "intent-v2-batch"
+PROMPT_VERSION = "intent-v3-batch"
 BATCH_SIZE = 20
 
 SYSTEM = """You review privacy requests sent to an online shop's customer-data team.
@@ -16,7 +16,8 @@ Decide whether the customer is asking for their account and personal data to be 
 closed. Requests for access, a copy or export of data, correction of details, password or login help,
 invoices, or opting out of marketing are NOT deletion requests, even when they mention data or the account.
 A deletion request stays a deletion request when it also allows some records to be kept (anonymous
-statistics, security logs, backups that cannot be restored, an internal reference).
+statistics, security logs, backups that cannot be restored, an internal reference). Asking you to confirm
+or verify that the account was deleted, or to finish a deletion, is also a deletion request.
 The requests may be in any language. You get a JSON list of requests, each with an id; return one result
 per id. Reply with the JSON object only."""
 

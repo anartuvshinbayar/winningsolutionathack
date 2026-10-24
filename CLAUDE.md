@@ -32,7 +32,7 @@ The engine exists and works. Do not rebuild it, improve it.
 | --- | --- |
 | Sample score (32 labelled cases) | status 32/32 · step F1 0.990 · exact rows 29/32 · sequence 1.000 |
 | `output.csv` | 518 rows, passes the structural checks, 355 INCOMPLETE / 153 COMPLETE / 10 NOT_APPLICABLE, 3,270 steps, run ≈ 2.5 s |
-| LLM usage in the last run | zero (no key in `.env` yet), rules decided intent; Gemini path tested against a local fake API only |
+| LLM usage in the last run | gemini-3.5-flash-lite decided all 398 distinct texts in 20 calls: 25,640 input / 16,727 output / 0 thinking tokens, $0.0495 at list price, $0 on the free tier; model and rules agree on all 550 requests |
 | Reports | `code/evaluation/evaluation_report.md` and `usage_report.md` exist and are current |
 | Account-link tiers (`risk_map.py`) | 238 identifier · 152 one job candidate · 90 fingerprint · 16 guess · 12 no job · 10 not deletion |
 | Remote | 5 commits on `origin/main`; later work is local until "go" |
@@ -48,7 +48,7 @@ code/audit/media.py           screenshots + PDFs via cached text in code/cache/m
 code/audit/identity.py        current + historical identifiers (user_identities.csv + user_audit_log.csv), lowercase emails, digit-only phones
 code/audit/jobs.py            ties deletion-job activity to cases when records carry no identifier (timing fingerprints, see Risks)
 code/audit/engine.py          state at audit_at -> policy (deletion_rules.csv) -> ordered steps
-code/audit/intent.py, llm.py  request intent: Claude if ANTHROPIC_API_KEY, else Gemini 2.5 Flash (REST, urllib) if GEMINI_API_KEY, else rules; 20 texts per call, disk cache, tokens incl. thinking
+code/audit/intent.py, llm.py  request intent: Claude if ANTHROPIC_API_KEY, else Gemini (GEMINI_MODEL, default gemini-3.5-flash-lite; gemini-3.8-flash planned for screenshots; REST, urllib) if GEMINI_API_KEY, else rules; 20 texts per call, disk cache, tokens incl. thinking
 code/evaluation/main.py       scorer vs dataset/sample_output.csv (--diff shows per-case misses)
 code/evaluation/custom_cases.py   our own 6 cases
 code/evaluation/structure.py  structural checks on any predictions file; main.py and the evaluator print them every run
@@ -74,7 +74,7 @@ Stdlib-only Python 3.10+. `anthropic` is optional (`.venv/` exists); the Gemini 
 ## Risks, in priority order
 
 1. **Job attribution (`jobs.py`)** links records to cases by second-level timing fingerprints of the deletion job. It is the cleverest and the shakiest part. `python3 code/tools/risk_map.py` tags every case by how its account was linked (counts above). 16 cases in 8 batches are still a guess: no evidence file names their account and no proven job activity separates the candidates, so it is a coin flip worth one or two steps each. No sample case reaches the guess path. 4 incomplete cases (case_52, 53, 61, 63) have no account step because nothing names one.
-2. **No model calls yet.** `usage_report.md` shows $0 until a key is in `.env`. The Gemini path (`GEMINI_API_KEY`, gemini-2.5-flash, 20 texts per call, 429 backoff) is tested only against a local fake of the REST API, so the first real run must be watched: it prints how many texts the model decided and every rule disagreement. Then commit the filled `code/cache/llm_cache.json` so offline runs reproduce it.
+2. **Model use is thin.** Gemini only classifies intent, and the rules already agree with it on every request. `code/cache/llm_cache.json` holds the 398 answers, so offline runs reproduce them; it has to ship in code.zip, which the checklist below does not allow yet. Next: read the 15 screenshots/PDFs with gemini-3.8-flash instead of macOS OCR. On 2026-10-24 Google's 3.8 capacity timed out or returned 503 on most calls, and gemini-2.5-flash is closed to new keys.
 3. **Portability.** Judges run `python3 code/main.py` on Linux. Nothing may depend on macOS, `swift`, `pdftotext` or network at run time.
 4. **Explainability.** Anar explains this live in the AI interview. Keep modules small, names plain, docstrings honest. Prefer a simpler rule over a cleverer one at equal score.
 5. **Reports** must match the final run exactly (numbers, status mix, token counts).

@@ -412,3 +412,90 @@ branch=main
 repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
 worktree=main
 parent_agent=none
+
+## [2026-10-24T17:01:51Z] Live Gemini run blocked: no GEMINI_API_KEY found
+
+User Prompt (verbatim, secrets redacted):
+the GEMINI_API_KEY is in .env now. run main.py for real, show me the disagreements and the usage numbers, commit the filled cache and reports, no push
+
+(sent again mid-turn) yes update the claude.md numbers. then the model part. im getting a free gemini key, it goes in .env as GEMINI_API_KEY. make llm.py support gemini-2.5-flash through the plain rest api with urllib so we stay stdlib only - anthropic still wins if ANTHROPIC_API_KEY is set, gemini if GEMINI_API_KEY is set, rules otherwise. json schema output like now, same disk cache, token counts from usageMetadata including thinking tokens, price table with the list prices and a note that the free tier bills zero. batch the intent calls, like 20 request texts per call since there are only 398 distinct texts, retry on 429 with backoff. keep the rule verdict as a cross check and print any disagreements. if the key is in .env when you run, run main.py for real so usage_report shows actual numbers. if its not there yet just make sure the fallback path is clean and say so. update the readme setup bit. commit, no push
+
+Agent Response Summary:
+No .env exists at the repo root, in code/, or in the two parent folders, and GEMINI_API_KEY is not set in the shell environment, so no live run was made and nothing new was committed. The re-sent request is already done in commit 96a300c, whose no-key fallback was verified (output.csv and llm_cache.json unchanged, evaluator, custom cases and structural checks passing); it was not redone.
+
+Actions:
+* listed .env key names in the repo root, code/ and parent folders (none found); checked the environment variable (unset)
+* no code changes, no commit
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=main
+repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
+worktree=main
+parent_agent=none
+
+## [2026-10-24T17:11:39Z] Live Gemini run: gemini-2.5-flash refused for this key (HTTP 404)
+
+User Prompt (verbatim, secrets redacted):
+ok the key is in .env now. run main.py for real, show me any disagreements between the rules and gemini, and commit the usage report. no push
+
+Agent Response Summary:
+GEMINI_API_KEY is now in .env (gitignored). The live run's first call got HTTP 404: the API says gemini-2.5-flash is no longer available to new users and suggests gemini-3.8-flash. The engine abandoned the model as designed, the rules decided all 398 texts, output.csv is unchanged and the structural checks pass. The key itself works (ListModels succeeds; it offers gemini-3.8-flash, 3.6-flash, 3.5-flash-lite, 3.1-flash-lite and others). Google's pricing page lists gemini-3.8-flash at $0.75 in / $3.75 out per 1M tokens through 2026-12-31 and gemini-3.5-flash-lite at $0.30 / $2.50, both with a free tier. The model switch is left to the user rather than following the error message; the usage report was restored to the committed version and nothing was committed.
+
+Actions:
+* python3 code/main.py (live; first Gemini call returned 404, rules fallback)
+* GET v1beta/models with the key to list available models (names only printed)
+* fetched ai.google.dev/gemini-api/docs/pricing
+* git checkout code/evaluation/usage_report.md (restored); no commit
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=main
+repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
+worktree=main
+parent_agent=none
+
+## [2026-10-24T17:36:15Z] Switch intent to gemini-3.8-flash; first live run, case_28 disagreement
+
+User Prompt (verbatim, secrets redacted):
+go with gemini-3.8-flash, its the one google names and we need its vision for the screenshots next anyway, keep GEMINI_MODEL as the override. check googles docs for the gemini 3 thinking and temperature params before calling. then run main.py for real, show me the rule vs model disagreements if any, update the price row, readme and claude.md, and commit the usage report. no push
+
+Agent Response Summary:
+Read Google's Gemini 3 guidance: keep temperature at the default 1.0 (lower values can loop or degrade) and use thinkingLevel rather than thinkingBudget (both together is a 400). Switched the default to gemini-3.8-flash with thinkingLevel low and no temperature, price row $0.75 / $3.75 (through 2026-12-31); made read timeouts retryable (60 s) and added a per-call progress line. Live run: call 1 answered 20/20, call 2 timed out or got 503 six times, so the model decided 20 of 398 texts. One disagreement: gemini said case_28 ("Can you verify that my account was deleted?") is not a deletion request, the rules and the sample answer say it is; with the model winning, sample status dropped to 31/32. Added one prompt sentence (confirming or verifying a deletion is a deletion request, prompt intent-v3-batch), cleared the 20 stale cache entries and restarted the live run. Nothing committed in this turn.
+
+Actions:
+* fetched ai.google.dev thinking and Gemini 3 guides (the 3.8 Flash page returned 404)
+* edited code/audit/llm.py, code/evaluation/usage.py, code/audit/intent.py, README.md, CLAUDE.md
+* scratch fake-API test; live python3 code/main.py (partial: 20/398); AUDIT_OFFLINE evaluator run to measure case_28
+* restarted the live run in the background
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=main
+repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
+worktree=main
+parent_agent=none
+
+## [2026-10-24T17:36:15Z] Intent on gemini-3.5-flash-lite: full live run, no disagreements
+
+User Prompt (verbatim, secrets redacted):
+googles too slow on 3.8 right now, use gemini-3.5-flash-lite for the intent run and keep 3.8 for vision later
+
+Agent Response Summary:
+Stopped the 3.8 run (still stuck on its first call; nothing written, cache empty, output.csv unchanged). Made gemini-3.5-flash-lite the intent default (GEMINI_MODEL still overrides), added its price row ($0.30 / $2.50, free tier) and kept the gemini-3.8-flash row for the planned screenshot reading. Live run: 20 calls, 398 of 398 distinct texts answered, model and rules agree on every request (case_28 included under the v3 prompt), output.csv byte-identical, 25,640 input / 16,727 output / 0 thinking tokens, $0.0495 at list price, $0 on the free tier. Evaluator 32/32 status, F1 0.990, 29/32 exact; custom cases 6/6 with the model; structural checks pass. Added failures row 9, updated CLAUDE.md and README, checked no file contains the key, committed the code, filled cache and usage report locally.
+
+Actions:
+* stopped background task; edited code/audit/llm.py, README.md, CLAUDE.md, code/evaluation/evaluation_report.md
+* scratch fake-API test; live python3 code/main.py; python3 code/evaluation/main.py --diff; python3 code/evaluation/custom_cases.py
+* git commit, no push
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=main
+repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
+worktree=main
+parent_agent=none

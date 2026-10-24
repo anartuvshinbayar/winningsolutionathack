@@ -3,7 +3,7 @@
 Which model runs is decided by the environment (or an uncommitted .env at the repo root, which never
 overrides the environment):
   ANTHROPIC_API_KEY set and the `anthropic` package installed -> Claude (AUDIT_MODEL, default claude-opus-5-5)
-  otherwise GEMINI_API_KEY set -> Gemini (GEMINI_MODEL, default gemini-2.5-flash) over the plain REST API
+  otherwise GEMINI_API_KEY set -> Gemini (GEMINI_MODEL, default gemini-3.5-flash-lite) over the plain REST API
   otherwise, or AUDIT_OFFLINE set -> no model; callers fall back to rules
 
 Calls are batched: one call answers up to 20 inputs against a JSON schema. Every answer is cached per input
@@ -38,19 +38,21 @@ _load_dotenv()
 
 ANTHROPIC_MODEL = os.environ.get("AUDIT_MODEL", "claude-opus-5-5")
 EFFORT = os.environ.get("AUDIT_EFFORT", "low")
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash-lite")  # intent; gemini-3.8-flash is for screenshots later
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-GEMINI_THINKING_BUDGET = 1024   # tokens of thinking allowed per call; billed as output
-MAX_ATTEMPTS = 6                # per call, for 429 and transient 5xx answers
-TIMEOUT = 90                    # seconds per HTTP request
+GEMINI_THINKING_LEVEL = "low"   # Gemini 3 thinking level (low / medium / high); thinking is billed as output
+MAX_ATTEMPTS = 6                # per call, for 429, transient 5xx answers and timeouts
+TIMEOUT = 60                    # seconds per HTTP request
 
 # USD per million tokens (input, output including thinking). Anthropic first-party list prices; Gemini API
-# paid-tier standard list prices (ai.google.dev/gemini-api/docs/pricing, checked 2026-10-25).
+# paid-tier standard list prices (ai.google.dev/gemini-api/docs/pricing, checked 2026-10-25). Google lists
+# gemini-3.8-flash (kept for the planned screenshot reading) at these rates through 2026-12-31 and at
+# $1.50 / $7.50 from 2027-01-01.
 PRICES = {
     "claude-opus-5-5": (4.00, 20.00), "claude-sonnet-5-5": (2.00, 10.00), "claude-haiku-5-5": (0.10, 0.50),
-    "gemini-2.5-flash": (0.30, 2.50),
+    "gemini-3.5-flash-lite": (0.30, 2.50), "gemini-3.8-flash": (0.75, 3.75),
 }
-FREE_TIER = {"gemini-2.5-flash"}  # the Gemini API free tier bills these models at $0
+FREE_TIER = {"gemini-3.5-flash-lite", "gemini-3.8-flash"}  # the Gemini API free tier bills these models at $0
 CACHE_FILE = CACHE_DIR / "llm_cache.json"
 
 
@@ -184,6 +186,8 @@ def structured_batch(system, items, item_schema, version, batch_size=20):
         for row in (result or {}).get("results", []):
             if isinstance(row, dict) and row.get("id") in ids and row["id"] not in answers:
                 answers[row["id"]] = {k: v for k, v in row.items() if k != "id"}
+        calls = -(-len(pending) // batch_size)
+        print(f"[llm] {model} call {start // batch_size + 1}/{calls}: {len(answers)} of {len(chunk)} answered")
         if not answers:
             continue
         call_id = _digest(model, version, system, [t for _k, t in chunk])[:24]
@@ -272,12 +276,14 @@ def _call_gemini(system, user, schema):
     body = {
         "systemInstruction": {"parts": [{"text": system}]},
         "contents": [{"role": "user", "parts": [{"text": user}]}],
+        # No temperature: Google recommends the default 1.0 for Gemini 3 (lower values can loop or degrade).
+        # Reruns are reproducible through the cache instead. thinkingLevel replaces the older thinkingBudget;
+        # sending both is a 400.
         "generationConfig": {
-            "temperature": 0,
             "maxOutputTokens": 8192,
             "responseMimeType": "application/json",
             "responseSchema": gemini_schema(schema),
-            "thinkingConfig": {"thinkingBudget": GEMINI_THINKING_BUDGET},
+            "thinkingConfig": {"thinkingLevel": GEMINI_THINKING_LEVEL},
         },
     }
     data = _post_gemini(body)
@@ -323,6 +329,15 @@ def _post_gemini(body):
             _give_up(f"Gemini HTTP {exc.code}: {message}")
             return None
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            reason = getattr(exc, "reason", exc)
+            if isinstance(exc, TimeoutError) or isinstance(reason, TimeoutError):
+                if attempt < MAX_ATTEMPTS - 1:
+                    wait = min(2.0 * 2 ** attempt, 60.0)
+                    print(f"[llm] Gemini timed out after {TIMEOUT}s, retry {attempt + 1}/{MAX_ATTEMPTS - 1} in {wait:.0f}s")
+                    time.sleep(wait)
+                    continue
+                _give_up(f"Gemini timed out {MAX_ATTEMPTS} times")
+                return None
             _give_up(f"Gemini unreachable ({exc.__class__.__name__})")
             return None
     return None

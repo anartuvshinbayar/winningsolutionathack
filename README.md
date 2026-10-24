@@ -27,9 +27,9 @@ echo "ANTHROPIC_API_KEY=..." >> .env
 .venv/bin/python code/main.py
 ```
 
-`GEMINI_MODEL` and `AUDIT_MODEL` override the default models (`gemini-2.5-flash`, `claude-opus-5-5`), and
-`AUDIT_OFFLINE=1` forces the rules. Requests go 20 distinct texts per call, and a 429 is retried with the
-server's suggested delay. Answers are cached in `code/cache/llm_cache.json`, so a re-run, or a later run
+`GEMINI_MODEL` and `AUDIT_MODEL` override the default models (`gemini-3.5-flash-lite`, `claude-opus-5-5`), and
+`AUDIT_OFFLINE=1` forces the rules. Requests go 20 distinct texts per call; a 429, a 5xx or a timeout is
+retried with backoff (the server's suggested delay when it gives one). Answers are cached in `code/cache/llm_cache.json`, so a re-run, or a later run
 without a key, reuses them and spends nothing.
 
 ```bash
@@ -63,7 +63,7 @@ activity stream ──► job attribution ────┤   (links records that 
 | `code/audit/identity.py` | Current and historical identifiers per user from `user_identities.csv` + `user_audit_log.csv`; case-insensitive emails, digit-normalised phones |
 | `code/audit/jobs.py` | Ties deletion-job activity to cases: the profile submission sits 44-75 min before `reported_at` and its result mirrors `reported_status`; later actions of the same job share its clock (fixed second offsets). Solves each batch of cases jointly |
 | `code/audit/engine.py` | Resolves each record's state from the newest admissible capture (replica copies that still expose data win ties), applies the policy, and plans findings → remediation → verification in the required order |
-| `code/audit/intent.py`, `code/audit/llm.py` | Request intent: Claude (`claude-opus-5-5`) or Gemini (`gemini-2.5-flash`, REST via `urllib`), 20 texts per JSON-schema call, disk-cached, tokens incl. thinking and cost tracked; multilingual rules as fallback and cross-check |
+| `code/audit/intent.py`, `code/audit/llm.py` | Request intent: Claude (`claude-opus-5-5`) or Gemini (`gemini-3.5-flash-lite`, REST via `urllib`, thinking level low, default temperature), 20 texts per JSON-schema call, disk-cached, tokens incl. thinking and cost tracked; multilingual rules as fallback and cross-check |
 
 Rules the engine follows:
 
