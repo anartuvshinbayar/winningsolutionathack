@@ -85,6 +85,11 @@ def clean_ids(record):
     return ids
 
 
+def record_keys(rec):
+    """Selector-style fields that name the subject a record was built for."""
+    return {str(rec[k]) for k in ("subject_selector", "query", "lookup_value") if rec.get(k)}
+
+
 def has_direct(ids):
     return any(k in DIRECT_FIELDS for k in ids)
 
@@ -196,6 +201,7 @@ def parse_sql(src, path, captured):
                 system = row.get("origin_system") or system_of(rid)
                 state, cat, ids = state_from_record(system, rec, row.get("collection_name", ""))
                 kind = f"sql:{table}"
+                keys = record_keys(rec)
             else:
                 system = typed.get(table) or system_of(rid)
                 rec = dict(row)
@@ -203,7 +209,8 @@ def parse_sql(src, path, captured):
                     rec.pop("source_resource_id", None)
                 state, cat, ids = state_from_record(system, rec)
                 kind = f"sql:{table}"
-            out.append(Obs(src, captured, system, rid, state, cat, ids, set(), kind))
+                keys = record_keys(rec)
+            out.append(Obs(src, captured, system, rid, state, cat, ids, keys, kind))
         # Replication drift: a replica table can hold rows its primary lost. Absence from the
         # primary table is evidence too, recorded per resource seen anywhere in this file.
     primaries = [t for t in tables if t.endswith("_primary")]
@@ -402,8 +409,8 @@ def parse_json(src, path, captured):
                 flat = flatten_document(rec)
                 system = snap["data_store"] if snap["data_store"] != "backup_restore_service" else system_of(rec["resource_id"])
                 state, cat, ids = state_from_record(system, flat, snap["collection"])
-                keys = {flat["subject_selector"]} if flat.get("subject_selector") else set()
-                out.append(Obs(src, t, system, rec["resource_id"], state, cat, ids, keys, f"json:{snap['collection']}"))
+                out.append(Obs(src, t, system, rec["resource_id"], state, cat, ids, record_keys(flat),
+                               f"json:{snap['collection']}"))
     elif "service_exports" in data:
         for system, groups in data["service_exports"].items():
             for group, recs in groups.items():
@@ -419,7 +426,8 @@ def parse_json(src, path, captured):
         for rec in data["records"]:
             system = system_of(rec["resource_id"])
             state, cat, ids = state_from_record(system, rec, data.get("collection", ""))
-            out.append(Obs(src, t, system, rec["resource_id"], state, cat, ids, set(), f"json:{data.get('collection')}"))
+            out.append(Obs(src, t, system, rec["resource_id"], state, cat, ids, record_keys(rec),
+                           f"json:{data.get('collection')}"))
     return out
 
 
@@ -442,7 +450,7 @@ def service_export_obs(src, system, group, rec, captured):
             out.append(Obs(src, t, "search_service", rid, "ABSENT", "SEARCH_INDEX_ENTRY", {}, keys, "json:index_queries"))
         return out
     state, cat, ids = state_from_record(system, rec)
-    return [Obs(src, t, system, rid, state, cat, ids, keys, f"json:{group}")]
+    return [Obs(src, t, system, rid, state, cat, ids, keys | record_keys(rec), f"json:{group}")]
 
 
 # ---------------------------------------------------------------------------

@@ -19,7 +19,6 @@ from datetime import datetime
 from .data import read_csv
 
 STATUS_RESULT = {"COMPLETE": "SUCCESS", "PARTIALLY_COMPLETE": "PARTIAL", "NOT_STARTED": "FAILED"}
-JOB_RESIDUALS = {9, 10, 11, 20, 21, 22}
 WINDOW_BEFORE = 80 * 60      # account submission may start this long before reported_at
 WINDOW_AFTER = 10 * 60
 TAIL = 5 * 3600              # job callbacks continue this long after reported_at
@@ -31,24 +30,29 @@ def ts(text):
     return datetime.strptime(text, "%Y-%m-%dT%H:%M:%SZ")
 
 
-def same_job(anchor_time, event_time, reported_at=None):
-    """Does an event run on the clock of the job whose profile submission happened at anchor_time?
+def clock_gap(anchor_time, event_time, reported_at):
+    """How far (seconds) an event sits from the clock of the job whose profile submission happened at
+    anchor_time, or None when it cannot belong to that job.
 
     Before the status report, policy actions run in 7.5-minute slots starting 29.5 minutes before
-    reported_at; slot k sits (40.5 + 29.5k) mod 60 seconds after the submission. After the report,
-    result callbacks sit 20-22 seconds (mod 30) after it."""
+    reported_at; slot k sits (40.7 + 29.5k) mod 60 seconds after the submission (fitted on
+    identifier-proven pairs). After the report, result callbacks sit about 21 seconds (mod 30) after it."""
     delta = int((ts(event_time) - ts(anchor_time)).total_seconds())
     if delta <= 0:
-        return False
-    if reported_at is not None and ts(event_time) < ts(reported_at):
+        return None
+    if ts(event_time) < ts(reported_at):
         lead = (ts(reported_at) - ts(event_time)).total_seconds()
         slot = min(3, max(0, round((29.5 * 60 - lead) / 450)))
-        center = (40.5 + 29.5 * slot) % 60
-        gap = abs(delta % 60 - center)
-        return min(gap, 60 - gap) <= 1.0
-    if reported_at is not None:
-        return delta % 30 in (20, 21, 22)
-    return delta % 30 in JOB_RESIDUALS
+        center, period = (40.7 + 29.5 * slot) % 60, 60
+    else:
+        center, period = 21.0, 30
+    gap = abs(delta % period - center)
+    gap = min(gap, period - gap)
+    return gap if gap <= 1.0 else None
+
+
+def same_job(anchor_time, event_time, reported_at):
+    return clock_gap(anchor_time, event_time, reported_at) is not None
 
 
 class JobLinker:
@@ -135,11 +139,16 @@ class JobLinker:
             if not job_event(a) or self.owners.get(a["resource_id"]):
                 continue
             t = ts(a["event_time"])
-            hits = [cid for cid, rep, sub in anchored
-                    if -WINDOW_BEFORE <= (t - ts(rep)).total_seconds() <= TAIL
-                    and sub["activity_id"] != a["activity_id"] and same_job(sub["event_time"], a["event_time"], rep)]
-            if len(hits) == 1:
-                self.extra[hits[0]].setdefault(a["resource_id"], a)
+            hits = []
+            for cid, rep, sub in anchored:
+                if -WINDOW_BEFORE <= (t - ts(rep)).total_seconds() <= TAIL and sub["activity_id"] != a["activity_id"]:
+                    gap = clock_gap(sub["event_time"], a["event_time"], rep)
+                    if gap is not None:
+                        hits.append((gap, cid))
+            hits.sort()
+            # Nearest clock wins; an exact tie stays unattributed.
+            if hits and (len(hits) == 1 or hits[0][0] < hits[1][0]):
+                self.extra[hits[0][1]].setdefault(a["resource_id"], a)
 
 
 def job_event(a):

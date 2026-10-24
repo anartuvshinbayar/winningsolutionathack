@@ -33,6 +33,7 @@ OP_ORDER = [
     "VERIFY_DATA_FLOW_DISABLED", "VERIFY_RESTORE_BLOCKED",
 ]
 PHASE_ORDER = {"FINDING": 0, "REMEDIATION": 1, "VERIFICATION": 2}
+EXPOSURE = {"IDENTIFIABLE": 3, "PRESENT": 2, "ACTIVE": 2}
 
 # Category when no capture names one: the system a resource id lives in.
 DEFAULT_CATEGORY = {
@@ -67,20 +68,27 @@ def compliant(actual, required):
 
 
 class Auditor:
-    def __init__(self):
+    def __init__(self, intents=None):
+        """intents: case_id -> True when the request authorizes deletion (non-deletion cases start no job)."""
+        intents = intents or {}
         self.obs, self.manifest = load_all()
         self.people = Directory()
         self.policy = load_policy()
         self.file_time = {fid: row["captured_at"] for fid, row in self.manifest.items()}
         self.by_rid = defaultdict(list)
+        self.system = {}
         for o in self.obs:
             self.by_rid[o.rid].append(o)
+            self.system.setdefault(o.rid, o.system)
         self.links = catalog_links()
+        for rid, (_alt, _email, _user, system, _aid) in self.links.items():
+            self.system.setdefault(rid, system)
         self.owners = self._owners()
         cases = []
         for name in ("sample_deletion_requests.csv", "deletion_requests.csv"):
             for r in read_csv(name):
-                cases.append(dict(r, user=self.people.resolve(r["email"])))
+                if intents.get(r["case_id"], True):
+                    cases.append(dict(r, user=self.people.resolve(r["email"])))
         self.cases_of = defaultdict(list)
         for c in cases:
             self.cases_of[c["user"]].append(c)
@@ -128,7 +136,7 @@ class Auditor:
         return cases[-1]["case_id"]
 
     def subject_resources(self, user, case_id):
-        found = {rid: system_of(rid) for rid, users in self.owners.items() if user in users}
+        found = {rid: self.system.get(rid) or system_of(rid) for rid, users in self.owners.items() if user in users}
         if len(self.cases_of[user]) > 1:
             found = {rid: s for rid, s in found.items() if self.case_for_link(rid, user) == case_id}
         sub = self.jobs.account.get(case_id)
@@ -144,7 +152,10 @@ class Auditor:
         cats = [o.cat for o in sorted(self.by_rid[rid], key=lambda o: o.t, reverse=True) if o.cat]
         if not seen:
             return None, (cats[0] if cats else None)
-        latest = max(seen, key=lambda o: (o.t, self.file_time.get(o.src, "")))
+        top = max(o.t for o in seen)
+        same_time = [o for o in seen if o.t == top]
+        # Copies captured together (primary and replicas): the one still exposing data decides.
+        latest = max(same_time, key=lambda o: (EXPOSURE.get(o.state, 0), self.file_time.get(o.src, "")))
         return latest, (cats[0] if cats else None)
 
     # -- planning ------------------------------------------------------------
@@ -160,6 +171,11 @@ class Auditor:
             if cat not in self.policy:
                 continue
             required = self.policy[cat]
+            from_job = rid in self.jobs.extra.get(req["case_id"], {}) or \
+                rid == self.jobs.account.get(req["case_id"], {}).get("resource_id")
+            if latest is None and not from_job and required != "PRESENT":
+                # Only captures taken after audit_at know about this record; they cannot shape the answer.
+                continue
             actual = latest.state if latest else None
             if actual == "IDENTIFIABLE" and required == "ABSENT":
                 actual = "PRESENT"
