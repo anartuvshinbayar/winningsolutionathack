@@ -3,7 +3,9 @@
 Reads dataset/, audits every request, writes output.csv at the repository root.
 --sample audits dataset/sample_deletion_requests.csv instead (for evaluation).
 
-Set ANTHROPIC_API_KEY to let Claude classify request intent; without it the multilingual rules decide.
+Request intent comes from Claude when ANTHROPIC_API_KEY is set, from Gemini when GEMINI_API_KEY is set, and from
+the multilingual rules otherwise (keys from the environment or an uncommitted .env). The rules also cross-check
+every model verdict and the run prints each disagreement.
 """
 import argparse
 import csv
@@ -16,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from audit import llm  # noqa: E402
 from audit.data import REPO_ROOT, read_csv  # noqa: E402
 from audit.engine import Auditor  # noqa: E402
-from audit.intent import classify, rule_verdict  # noqa: E402
+from audit.intent import classify_texts, rule_verdict  # noqa: E402
 from evaluation.structure import report as check_structure  # noqa: E402
 from evaluation.usage import write_usage_report  # noqa: E402
 
@@ -27,21 +29,32 @@ def case_sort_key(case_id):
 
 
 def classify_all():
-    """Intent for every known request (sample and evaluation share deletion-job batches)."""
-    intents, disagreements = {}, []
-    for name in ("sample_deletion_requests.csv", "deletion_requests.csv"):
-        for req in read_csv(name):
-            verdict = classify(req["request_text"], req["case_id"])
-            intents[req["case_id"]] = verdict
-            if verdict != rule_verdict(req["request_text"]):
-                disagreements.append(req["case_id"])
+    """Intent for every known request (sample and evaluation share deletion-job batches).
+
+    The model decides every text it answered; the rules decide the rest and cross-check the model."""
+    requests = [req for name in ("sample_deletion_requests.csv", "deletion_requests.csv") for req in read_csv(name)]
+    verdicts, decided = classify_texts([r["request_text"] for r in requests])
     llm.save_cache()
-    return intents, disagreements
+    intents = {r["case_id"]: verdicts[r["request_text"]] for r in requests}
+    disagreements = [r["case_id"] for r in requests if r["request_text"] in decided
+                     and verdicts[r["request_text"]] != rule_verdict(r["request_text"])]
+    if decided:
+        source = ", ".join(sorted(llm.USAGE.models)) or "model"
+        print(f"intent: {source} decided {len(decided)} of {len(verdicts)} distinct texts, rules the rest")
+        if disagreements:
+            for case_id in disagreements:
+                print(f"intent: model says {'deletion' if intents[case_id] else 'not deletion'} for {case_id}, "
+                      f"rules say {'not deletion' if intents[case_id] else 'deletion'}")
+        else:
+            print("intent: model and rules agree on every request")
+    else:
+        print(f"intent: no model answers, the multilingual rules decided all {len(verdicts)} distinct texts")
+    return intents, {"disagreements": disagreements, "decided": len(decided), "distinct": len(verdicts)}
 
 
 def run(requests_file, out_path):
     started = time.time()
-    intents, disagreements = classify_all()
+    intents, intent_info = classify_all()
     auditor = Auditor(intents)
     rows = []
     for req in read_csv(requests_file):
@@ -57,7 +70,9 @@ def run(requests_file, out_path):
         for case_id, status, steps in rows:
             w.writerow([case_id, status, json.dumps(steps, separators=(",", ":"), ensure_ascii=False)])
     run_info = {"requests_file": requests_file, "rows": len(rows), "seconds": round(time.time() - started, 2),
-                "llm_online": llm.available(), "intent_disagreements": disagreements,
+                "llm_online": llm.available(), "llm_provider": llm.provider(), "llm_model": llm.model_name(),
+                "intent_disagreements": intent_info["disagreements"], "intent_decided": intent_info["decided"],
+                "intent_distinct": intent_info["distinct"],
                 "usage": llm.USAGE.summary()}
     return rows, run_info
 

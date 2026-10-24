@@ -24,16 +24,17 @@ AGENTS.md above is the official contract (log.txt, output format, allowed operat
 - **No secrets** in code, logs, reports, commits. API key only via env var or the uncommitted `.env`.
 - **No cheating.** Predictions use only files under `dataset/`. Never hardcode a case answer. `sample_output.csv` is the scorer, never a lookup table. Never edit `dataset/`.
 
-## Where things stand (2026-10-24)
+## Where things stand (2026-10-25)
 
 The engine exists and works. Do not rebuild it, improve it.
 
 | Thing | State |
 | --- | --- |
 | Sample score (32 labelled cases) | status 32/32 · step F1 0.990 · exact rows 29/32 · sequence 1.000 |
-| `output.csv` | 518 rows, valid, 355 INCOMPLETE / 153 COMPLETE / 10 NOT_APPLICABLE, 3,265 steps, run ≈ 2.5 s |
-| LLM usage in the last run | zero (no API key on this machine), rules decided intent |
+| `output.csv` | 518 rows, passes the structural checks, 355 INCOMPLETE / 153 COMPLETE / 10 NOT_APPLICABLE, 3,270 steps, run ≈ 2.5 s |
+| LLM usage in the last run | zero (no key in `.env` yet), rules decided intent; Gemini path tested against a local fake API only |
 | Reports | `code/evaluation/evaluation_report.md` and `usage_report.md` exist and are current |
+| Account-link tiers (`risk_map.py`) | 238 identifier · 152 one job candidate · 90 fingerprint · 16 guess · 12 no job · 10 not deletion |
 | Remote | 5 commits on `origin/main`; later work is local until "go" |
 
 The 3 sample misses (case_04, case_18, case_20) need record IDs that appear in no participant file. Don't chase them.
@@ -47,15 +48,17 @@ code/audit/media.py           screenshots + PDFs via cached text in code/cache/m
 code/audit/identity.py        current + historical identifiers (user_identities.csv + user_audit_log.csv), lowercase emails, digit-only phones
 code/audit/jobs.py            ties deletion-job activity to cases when records carry no identifier (timing fingerprints, see Risks)
 code/audit/engine.py          state at audit_at -> policy (deletion_rules.csv) -> ordered steps
-code/audit/intent.py, llm.py  request intent: Claude (structured output, disk cache, token accounting) with multilingual rules as fallback
+code/audit/intent.py, llm.py  request intent: Claude if ANTHROPIC_API_KEY, else Gemini 2.5 Flash (REST, urllib) if GEMINI_API_KEY, else rules; 20 texts per call, disk cache, tokens incl. thinking
 code/evaluation/main.py       scorer vs dataset/sample_output.csv (--diff shows per-case misses)
 code/evaluation/custom_cases.py   our own 6 cases
+code/evaluation/structure.py  structural checks on any predictions file; main.py and the evaluator print them every run
 code/evaluation/usage.py      writes usage_report.md from the run's token counters
 code/tools/explain_case.py    everything the engine knows about one case; use it before guessing
+code/tools/risk_map.py        tags every case by how its account was linked to a deletion job (confidence tiers)
 code/tools/extract_media.py   rebuilds the OCR/PDF text cache (macOS only; the cache is committed so runs work anywhere)
 ```
 
-Stdlib-only Python 3.10+. `anthropic` is optional (`.venv/` exists). Full run must stay offline-capable, deterministic, and fast.
+Stdlib-only Python 3.10+. `anthropic` is optional (`.venv/` exists); the Gemini path needs no package. Full run must stay offline-capable, deterministic, and fast.
 
 ## Facts about the data we have verified
 
@@ -70,8 +73,8 @@ Stdlib-only Python 3.10+. `anthropic` is optional (`.venv/` exists). Full run mu
 
 ## Risks, in priority order
 
-1. **Job attribution (`jobs.py`)** links records to cases by second-level timing fingerprints of the deletion job. It is the cleverest and the shakiest part. We need to know how many of the 518 cases depend on it and how many of those were guesses, and whether real evidence can replace the guess.
-2. **No model calls yet.** `usage_report.md` shows $0. Either an API key arrives and Claude classifies intent (and ideally reads the 15 screenshots/PDFs instead of macOS OCR), or the reports explain honestly why the engine is deterministic.
+1. **Job attribution (`jobs.py`)** links records to cases by second-level timing fingerprints of the deletion job. It is the cleverest and the shakiest part. `python3 code/tools/risk_map.py` tags every case by how its account was linked (counts above). 16 cases in 8 batches are still a guess: no evidence file names their account and no proven job activity separates the candidates, so it is a coin flip worth one or two steps each. No sample case reaches the guess path. 4 incomplete cases (case_52, 53, 61, 63) have no account step because nothing names one.
+2. **No model calls yet.** `usage_report.md` shows $0 until a key is in `.env`. The Gemini path (`GEMINI_API_KEY`, gemini-2.5-flash, 20 texts per call, 429 backoff) is tested only against a local fake of the REST API, so the first real run must be watched: it prints how many texts the model decided and every rule disagreement. Then commit the filled `code/cache/llm_cache.json` so offline runs reproduce it.
 3. **Portability.** Judges run `python3 code/main.py` on Linux. Nothing may depend on macOS, `swift`, `pdftotext` or network at run time.
 4. **Explainability.** Anar explains this live in the AI interview. Keep modules small, names plain, docstrings honest. Prefer a simpler rule over a cleverer one at equal score.
 5. **Reports** must match the final run exactly (numbers, status mix, token counts).
@@ -82,7 +85,7 @@ Stdlib-only Python 3.10+. `anthropic` is optional (`.venv/` exists). Full run mu
 - Never cite a file captured after the case's `audit_at`.
 - COMPLETE only when every record has its required treatment, retained records are present, no flow or restore path is active.
 - Order: phase → operation order from AGENTS.md §6.4 → `system_id` → `resource_id` (numeric-aware). Renumber from 1.
-- Every run must pass the structural checks (header, 518 sorted rows, valid JSON, consecutive step_no, evidence time rule). Keep them in the evaluator.
+- Every run must pass the structural checks (header, 518 sorted rows, valid JSON, consecutive step_no, allowed operation/state pairs, evidence time rule). They live in `code/evaluation/structure.py`; `main.py` and the evaluator print them and exit non-zero on failure.
 - After every engine change: `python3 code/evaluation/main.py --diff`, then `python3 code/evaluation/custom_cases.py`, then `python3 code/main.py`. Add a row to the "Failures found and improvements made" table in `evaluation_report.md` for every real fix.
 
 ## Commands
@@ -92,6 +95,7 @@ python3 code/main.py                        # 518 rows -> output.csv, rewrites u
 python3 code/evaluation/main.py --diff      # sample score + per-case misses
 python3 code/evaluation/custom_cases.py     # our own cases
 python3 code/tools/explain_case.py case_35  # one case, all evidence
+python3 code/tools/risk_map.py              # account-link tier per case, list of guessed cases
 zip -r code.zip README.md code -x "*/__pycache__/*" "*/.venv/*" "*/venv/*" "*/node_modules/*" "*/.git/*" "*/.DS_Store"
 ```
 

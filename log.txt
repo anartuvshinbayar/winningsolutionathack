@@ -389,3 +389,26 @@ branch=main
 repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
 worktree=main
 parent_agent=none
+
+## [2026-10-24T17:00:29Z] Gemini 2.5 Flash over REST for request intent; CLAUDE.md numbers
+
+User Prompt (verbatim, secrets redacted):
+yes update the claude.md numbers. then the model part. im getting a free gemini key, it goes in .env as GEMINI_API_KEY. make llm.py support gemini-2.5-flash through the plain rest api with urllib so we stay stdlib only - anthropic still wins if ANTHROPIC_API_KEY is set, gemini if GEMINI_API_KEY is set, rules otherwise. json schema output like now, same disk cache, token counts from usageMetadata including thinking tokens, price table with the list prices and a note that the free tier bills zero. batch the intent calls, like 20 request texts per call since there are only 398 distinct texts, retry on 429 with backoff. keep the rule verdict as a cross check and print any disagreements. if the key is in .env when you run, run main.py for real so usage_report shows actual numbers. if its not there yet just make sure the fallback path is clean and say so. update the readme setup bit. commit, no push
+
+Agent Response Summary:
+Updated CLAUDE.md (3,270 steps, account-link tiers, risk 1 and 2, layout, structural-check rule, commands). Rewrote llm.py: provider order Claude, then Gemini (gemini-2.5-flash via generateContent with urllib, x-goog-api-key header, responseSchema in Google's upper-case schema subset, thinking budget 1024), then rules; batched structured calls of 20 texts (398 distinct texts, 20 calls); per-text disk cache with the producing call's usage so cached and offline runs report the same tokens; usage from usageMetadata incl. thoughtsTokenCount; 429/5xx retries honouring RetryInfo, with a daily-quota or bad-key answer abandoning the model for the run. Prices checked on Google's pricing page (/bin/zsh.30 in, .50 out incl. thinking, free tier free). intent.py batches; main.py prints how many texts the model decided and each rule disagreement; usage report gained thinking tokens, both price tables and the free-tier note. No .env exists, so no live call was made: the Gemini path was tested end to end against a local fake API (retry, cache, offline reuse, daily quota, bad key), and the real offline run leaves output.csv and the cache byte-identical; evaluator, custom cases 6/6 and structural checks pass. README setup rewritten.
+
+Actions:
+* edited CLAUDE.md, README.md
+* rewrote code/audit/llm.py and code/evaluation/usage.py; edited code/audit/intent.py and code/main.py
+* fetched ai.google.dev pricing and API reference pages
+* ran a scratch fake-Gemini test (scratchpad, not committed), python3 code/main.py, code/evaluation/main.py --diff, code/evaluation/custom_cases.py
+* git commit, no push
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=main
+repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
+worktree=main
+parent_agent=none

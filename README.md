@@ -8,14 +8,29 @@ remediation and verification steps to `output.csv`.
 
 ## Run
 
-Requirements: Python 3.10+ (standard library only). Optional, to let Claude classify request intent
-(without it the multilingual rules make the same decision offline):
+Requirements: Python 3.10+ (standard library only). Optional: let a model classify request intent. Without
+a key the multilingual rules make the same decision offline; with one they cross-check every model verdict and
+the run prints any disagreement.
+
+Gemini (a free key from Google AI Studio works; plain REST through `urllib`, no extra packages):
+
+```bash
+echo "GEMINI_API_KEY=..." >> .env      # uncommitted; read at startup, never overrides the environment
+python3 code/main.py
+```
+
+Claude takes priority when `ANTHROPIC_API_KEY` is set, and needs the SDK:
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install anthropic
-echo "ANTHROPIC_API_KEY=..." > .env     # uncommitted; read at startup, never overrides the environment
+echo "ANTHROPIC_API_KEY=..." >> .env
 .venv/bin/python code/main.py
 ```
+
+`GEMINI_MODEL` and `AUDIT_MODEL` override the default models (`gemini-2.5-flash`, `claude-opus-5-5`), and
+`AUDIT_OFFLINE=1` forces the rules. Requests go 20 distinct texts per call, and a 429 is retried with the
+server's suggested delay. Answers are cached in `code/cache/llm_cache.json`, so a re-run, or a later run
+without a key, reuses them and spends nothing.
 
 ```bash
 python3 code/main.py                        # writes output.csv (518 rows) and code/evaluation/usage_report.md
@@ -34,7 +49,7 @@ run `python3 code/tools/extract_media.py --force` (macOS Vision OCR via `swift`,
 ```text
 evidence files ──► parsers ──► one observation table (who / what / state / when / which file)
                                         │
-request ──► intent (Claude + rules) ──► identity (current + historical emails, phones, hashes, user_id)
+request ──► intent (model + rules) ──► identity (current + historical emails, phones, hashes, user_id)
                                         │
 activity stream ──► job attribution ────┤   (links records that no longer carry any identifier)
                                         ▼
@@ -48,7 +63,7 @@ activity stream ──► job attribution ────┤   (links records that 
 | `code/audit/identity.py` | Current and historical identifiers per user from `user_identities.csv` + `user_audit_log.csv`; case-insensitive emails, digit-normalised phones |
 | `code/audit/jobs.py` | Ties deletion-job activity to cases: the profile submission sits 44-75 min before `reported_at` and its result mirrors `reported_status`; later actions of the same job share its clock (fixed second offsets). Solves each batch of cases jointly |
 | `code/audit/engine.py` | Resolves each record's state from the newest admissible capture (replica copies that still expose data win ties), applies the policy, and plans findings → remediation → verification in the required order |
-| `code/audit/intent.py`, `code/audit/llm.py` | Request intent: Claude (`claude-opus-5-5`, low effort, JSON-schema output, disk-cached, token/cost tracked) with multilingual rules as fallback |
+| `code/audit/intent.py`, `code/audit/llm.py` | Request intent: Claude (`claude-opus-5-5`) or Gemini (`gemini-2.5-flash`, REST via `urllib`), 20 texts per JSON-schema call, disk-cached, tokens incl. thinking and cost tracked; multilingual rules as fallback and cross-check |
 
 Rules the engine follows:
 

@@ -1,13 +1,15 @@
 """Does the request text authorize deletion?
 
-Claude reads the request (any language) and returns a structured verdict. Multilingual rules give the
-same verdict offline and act as the fallback; disagreements are reported by the evaluation script.
+A model (Claude or Gemini, see llm.py) reads the requests in batches of 20 distinct texts, in any language,
+and returns a structured verdict for each. Multilingual rules give a verdict offline, act as the fallback for
+any text the model did not answer, and cross-check the model: main.py prints every disagreement.
 """
 import re
 
 from . import llm
 
-PROMPT_VERSION = "intent-v1"
+PROMPT_VERSION = "intent-v2-batch"
+BATCH_SIZE = 20
 
 SYSTEM = """You review privacy requests sent to an online shop's customer-data team.
 Decide whether the customer is asking for their account and personal data to be deleted, erased, or
@@ -15,9 +17,10 @@ closed. Requests for access, a copy or export of data, correction of details, pa
 invoices, or opting out of marketing are NOT deletion requests, even when they mention data or the account.
 A deletion request stays a deletion request when it also allows some records to be kept (anonymous
 statistics, security logs, backups that cannot be restored, an internal reference).
-The request may be in any language. Reply with the JSON object only."""
+The requests may be in any language. You get a JSON list of requests, each with an id; return one result
+per id. Reply with the JSON object only."""
 
-SCHEMA = {
+ITEM_SCHEMA = {  # one result; llm.structured_batch adds the id and wraps the list
     "type": "object",
     "properties": {
         "authorizes_deletion": {"type": "boolean"},
@@ -59,12 +62,20 @@ def rule_verdict(text):
     return any(re.search(p, t) for p in DELETE)
 
 
-def model_verdict(text):
-    result = llm.structured(SYSTEM, f"Customer request:\n{text}", SCHEMA, PROMPT_VERSION)
-    return None if result is None else bool(result["authorizes_deletion"])
+def model_verdicts(texts):
+    """{text: bool} for every distinct text the model answered (now or from the cache)."""
+    distinct = sorted(set(texts))  # sorted, so the batches are the same on every run
+    answers = llm.structured_batch(SYSTEM, {t: t for t in distinct}, ITEM_SCHEMA, PROMPT_VERSION, BATCH_SIZE)
+    return {t: bool(a["authorizes_deletion"]) for t, a in answers.items()
+            if isinstance(a.get("authorizes_deletion"), bool)}
+
+
+def classify_texts(texts):
+    """({text: True when it authorizes deletion}, set of texts the model decided). Rules decide the rest."""
+    model = model_verdicts(texts)
+    return {t: model.get(t, rule_verdict(t)) for t in set(texts)}, set(model)
 
 
 def classify(text, case_id=None):
-    """True when the request authorizes deletion."""
-    verdict = model_verdict(text)
-    return rule_verdict(text) if verdict is None else verdict
+    """True when one request authorizes deletion."""
+    return classify_texts([text])[0][text]
