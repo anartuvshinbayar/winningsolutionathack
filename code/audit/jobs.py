@@ -9,6 +9,9 @@ anonymized analytics row). The activity stream still shows the job that touched 
 * Every later action of the same job (policy actions, result callbacks, connector and restore
   checks, replication checkpoints) runs on the job's clock: its offset from the profile submission
   is a whole number of half-minutes plus 10 or 21 seconds (+-1s).
+* After the status report the callbacks also keep their position: the k-th one sits
+  (51.9 + 29.5(k-1)) mod 60 seconds after the submission, so they alternate between the two
+  half-minutes. When two submissions both fit the half-minute clock, this breaks the tie.
 
 Cases that share a reported_at form one batch; we solve each batch jointly, fixing the links that
 identifiers prove first and eliminating from there.
@@ -53,6 +56,30 @@ def clock_gap(anchor_time, event_time, reported_at):
 
 def same_job(anchor_time, event_time, reported_at):
     return clock_gap(anchor_time, event_time, reported_at) is not None
+
+
+def callback_gap(anchor_time, event_time, k):
+    """How far (seconds) the k-th result callback after the status report sits from where the job whose
+    profile submission happened at anchor_time puts it, or None beyond 1 second.
+
+    Callback k sits (51.9 + 29.5(k-1)) mod 60 seconds after the submission (fitted on identifier-proven
+    pairs: 358 of 364 callbacks within 1 second)."""
+    delta = int((ts(event_time) - ts(anchor_time)).total_seconds())
+    if delta <= 0:
+        return None
+    center = (51.9 + 29.5 * (k - 1)) % 60
+    gap = abs(delta % 60 - center)
+    gap = min(gap, 60 - gap)
+    return gap if gap <= 1.0 else None
+
+
+def clock_score(anchor_time, anchors, reported_at):
+    """How well a candidate submission explains a person's proven job activity, as a pair compared in order:
+    (activity on the job's half-minute clock, post-report callbacks on the right half-minute for their position)."""
+    on_clock = sum(same_job(anchor_time, x["event_time"], reported_at) for x in anchors)
+    callbacks = sorted((x for x in anchors if ts(x["event_time"]) >= ts(reported_at)), key=lambda x: x["event_time"])
+    in_position = sum(callback_gap(anchor_time, x["event_time"], k) is not None for k, x in enumerate(callbacks, 1))
+    return on_clock, in_position
 
 
 class JobLinker:
@@ -102,10 +129,9 @@ class JobLinker:
             matching = [a for a in free if a["reported_result"] == want] or free
             anchors = self._linked_activity(case)
             if anchors:
-                scored = [(sum(same_job(a["event_time"], x["event_time"], case["reported_at"]) for x in anchors), a)
-                          for a in matching]
-                best = max((s for s, _ in scored), default=0)
-                if best > 0:
+                scored = [(clock_score(a["event_time"], anchors, case["reported_at"]), a) for a in matching]
+                best = max((s for s, _ in scored), default=(0, 0))
+                if best[0] > 0:
                     matching = [a for s, a in scored if s == best]
             cand[cid] = matching
         taken = {a["activity_id"] for a in self.account.values()}

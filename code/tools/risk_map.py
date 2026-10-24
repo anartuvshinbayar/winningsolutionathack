@@ -9,6 +9,7 @@ Tags, in the order jobs.JobLinker tries them:
                 (an evidence file or a data-catalog link carries their identifier)
   SINGLE        nothing proven; the time window, the reported-status filter and batch elimination left one submission
   FINGERPRINT   several submissions were left; the job-clock fingerprint against the person's proven records chose
+                (half-minute clock first, callback position as the tie-break)
   GUESS         still several; the engine took the submission closest to 3540 s before reported_at
   NONE          no submission in the window at all
   NON_DELETION  the request does not authorize deletion, so no job is looked for
@@ -25,7 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from audit.data import DATASET, read_csv  # noqa: E402
 from audit.engine import Auditor  # noqa: E402
 from audit.intent import rule_verdict  # noqa: E402
-from audit.jobs import STATUS_RESULT, same_job, ts  # noqa: E402
+from audit.jobs import STATUS_RESULT, clock_score, ts  # noqa: E402
 from evaluation.main import key as step_key  # noqa: E402
 from evaluation.main import load as load_rows  # noqa: E402
 
@@ -55,10 +56,9 @@ def trace(linker, catalog):
         narrowed = False
         before = len(matching)
         if anchors:
-            scored = [(sum(same_job(a["event_time"], x["event_time"], case["reported_at"]) for x in anchors), a)
-                      for a in matching]
-            best = max((s for s, _ in scored), default=0)
-            if best > 0:
+            scored = [(clock_score(a["event_time"], anchors, case["reported_at"]), a) for a in matching]
+            best = max((s for s, _ in scored), default=(0, 0))
+            if best[0] > 0:
                 kept = [a for s, a in scored if s == best]
                 narrowed = len(kept) < len(matching)
                 matching = kept

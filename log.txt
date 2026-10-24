@@ -340,3 +340,27 @@ branch=main
 repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
 worktree=main
 parent_agent=none
+
+## [2026-10-24T15:48:14Z] Callback-position tie-break in job attribution
+
+User Prompt (verbatim, secrets redacted):
+yes, add the stricter callback clock rule to jobs.py, run the evaluator, custom cases and main.py, and add a row to the failures table
+
+Agent Response Summary:
+Added a tie-break to the job attribution: when two deletion-job submissions fit a person's proven activity equally on the half-minute clock, the k-th post-report callback must sit (51.9 + 29.5(k-1)) mod 60 s after the submission (fitted on proven pairs, 358 of 364 within 1 s; 48/50 right, 2 tied, 0 wrong with the answer hidden). It is a secondary score, so it only settles ties the old rule left. Guessed cases fell from 26 to 16; four output rows changed one account step each (case_404/case_406 swapped, case_410 took account_163, case_411 moved to account_2775), status mix unchanged. Sample scores unchanged (no sample case used the fallback); custom cases 6/6; structural checks on output.csv pass. The risk_map replay now calls the same scoring function as the engine.
+
+Actions:
+* edited code/audit/jobs.py (callback_gap, clock_score, tie-break in _assign_accounts, module docstring)
+* edited code/tools/risk_map.py to use clock_score
+* ran python3 code/evaluation/main.py --diff, code/evaluation/custom_cases.py, code/main.py, code/tools/risk_map.py (eval and --sample)
+* diffed output.csv against the previous run; ran structural checks inline
+* added failures row 7 and a known-limits bullet to code/evaluation/evaluation_report.md; usage_report.md rewritten by the run
+* git commit, no push
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=main
+repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
+worktree=main
+parent_agent=none

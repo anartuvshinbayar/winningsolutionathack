@@ -69,6 +69,7 @@ change the engine, re-run. Scores are on the 32 samples.
 | 4 | Legacy contact-index rows (support replica) were treated as support messages to redact | Classified as `SECONDARY_IDENTIFIER` (delete) | 0.990 | 0.906 |
 | 5 | Connector selectors stored inside SQL JSON rows were not used for linking; primary/replica rows captured together picked an arbitrary copy; adjacent batch cases one second apart collided | Selector keys for every record shape; replica ties resolved toward the copy that still exposes data (replication drift); nearest-clock attribution with fitted slot centres (unattributed job actions: 6 -> 2) | 0.990 | 0.906 |
 | 6 | Custom cases C5/C6 failed: the offline rules saw the deletion verb and missed the refusal | Multilingual keep/refusal patterns for pt/es/fr/ja/ko; Claude classifies intent first when available, with the rules as fallback | 0.990 | 0.906 |
+| 7 | `code/tools/risk_map.py` showed 26 evaluation cases whose account came from the closest-to-3540 s fallback. Two submissions often fit the half-minute job clock equally: on proven pairs with the answer hidden, 6 of 50 stayed tied | Callback-position tie-break in `jobs.py`: the k-th result callback after the status report sits (51.9 + 29.5(k-1)) mod 60 s after the submission. Same 50 proven pairs: 48 right, 2 tied, 0 wrong. Guessed cases 26 -> 16. Four evaluation rows changed one account step each: case_404 and case_406 swapped, case_410 now takes account_163 from its own callbacks, and case_411, still a guess, moves to account_2775. No sample case used the fallback, so sample scores are unchanged | 0.990 | 0.906 |
 
 Checks made on the 518 evaluation cases without labels (by reading `code/tools/explain_case.py` output for
 one or more cases of every evidence family: handover note, replica SQL, inventory SQL + lookup trace,
@@ -82,5 +83,8 @@ file was captured after its case's `audit_at`.
 - Records that appear in no participant file (case_18, case_20) cannot be listed.
 - When two cases in one batch have identical job fingerprints, the action stays unattributed rather than
   guessed (2 actions in the whole stream, one of them a hand-written sample).
+- 16 evaluation cases in 8 batches have no proven job activity that separates the submissions left to
+  them. The engine takes the submission closest to the usual 59-minute lead, which puts one or two account
+  or job-action steps per case at risk. `python3 code/tools/risk_map.py` lists them.
 - Screenshot text comes from local OCR; each screenshot's focus record is identified through the data
   catalog link, so OCR noise does not reach the answer.
