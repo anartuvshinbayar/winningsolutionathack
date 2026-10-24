@@ -8,9 +8,14 @@ remediation and verification steps to `output.csv`.
 
 ## Run
 
-Requirements: Python 3.10+ (standard library only). Optional: `pip install anthropic` and an
-`ANTHROPIC_API_KEY` in the environment (or an uncommitted `.env` you export) to let Claude classify request
-intent; without it the multilingual rules make the same decision offline.
+Requirements: Python 3.10+ (standard library only). Optional, to let Claude classify request intent
+(without it the multilingual rules make the same decision offline):
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install anthropic
+echo "ANTHROPIC_API_KEY=..." > .env     # uncommitted; read at startup, never overrides the environment
+.venv/bin/python code/main.py
+```
 
 ```bash
 python3 code/main.py                        # writes output.csv (518 rows) and code/evaluation/usage_report.md

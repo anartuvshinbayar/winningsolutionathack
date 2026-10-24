@@ -110,3 +110,43 @@ branch=main
 repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
 worktree=main
 parent_agent=none
+
+## [2026-10-24T14:04:27Z] Install Anthropic SDK in a local venv
+
+User Prompt (verbatim, secrets redacted):
+pip install anthropic (run by the user; failed with "pyenv: pip: command not found")
+
+Agent Response Summary:
+The shell had no pip on PATH, but python3 -m pip worked; Homebrew Python blocks global installs, so the SDK was installed into a project-local .venv (anthropic 2.3.0, gitignored and excluded from code.zip). Verified the SDK accepts output_config, fallbacks and betas as used in code/audit/llm.py, and updated the README setup steps. The API key is still to be added by the user in .env.
+
+Actions:
+* python3 -m venv .venv; .venv/bin/pip install anthropic
+* edited README.md (setup section)
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=main
+repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
+worktree=main
+parent_agent=none
+
+## [2026-10-24T14:04:27Z] Push commits to GitHub
+
+User Prompt (verbatim, secrets redacted):
+go — push the commits
+
+Agent Response Summary:
+Committed the README setup update and this log entry, then pushed all local commits on main to origin. Commits are authored by Anar Tuvshinbayar with no AI attribution lines.
+
+Actions:
+* git commit (README.md, log.txt)
+* git push origin main
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=main
+repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
+worktree=main
+parent_agent=none
