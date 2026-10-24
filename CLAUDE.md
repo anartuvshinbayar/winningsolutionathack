@@ -2,79 +2,102 @@
 
 # CLAUDE.md — Ghost Data Still Exists (HackerRank Orchestrate, Oct 2026)
 
-AGENTS.md (imported above) is the official contract: logging to `log.txt`, output format, allowed operations, evidence rules. Everything below adds our team rules and game plan on top of it. If the two ever conflict on the output contract, AGENTS.md wins.
+AGENTS.md above is the official contract (log.txt, output format, allowed operations, evidence rules). This file is our team playbook on top of it. If they ever disagree on the output contract, AGENTS.md wins.
 
-## Team rules (always)
+## How we work in this repo
 
-- **Authorship:** every commit is by `Anar Tuvshinbayar <anaridk56@gmail.com>` (set in this repo's local git config). No AI co-author lines, no "Generated with" footers, no AI credit anywhere in commits, PRs, code comments, README, or reports.
-- **Nothing goes live without "go":** commit locally freely, but never push, open a PR, or submit anything until Anar says "go".
-- **Short, plain answers.** Do exactly what's asked; if unclear, ask one short question.
-- **Logging is mandatory:** append a `log.txt` entry for every turn exactly as AGENTS.md §5 says (it is the `chat_transcript` submission). Required fields there are not authorship credit.
-- **No secrets:** API keys only from env vars / an uncommitted `.env`. Never in code, logs, reports, or commits.
-- **No cheating:** predictions use only files under `dataset/`. Never hardcode case answers. `sample_output.csv` is for evaluation only, never a lookup table.
+- **Author:** every commit is by `Anar Tuvshinbayar <anaridk56@gmail.com>` (repo-local git config, already set). No AI co-author lines, no "Generated with" footers, no AI credit anywhere: commits, code comments, README, reports. The `tool=` / `model=` lines in log.txt are required fields, not credit, keep them accurate.
+- **Nothing goes live without "go":** commit locally as much as you like, never push, open a PR or submit until Anar says "go".
+- **Log every turn** to `log.txt` exactly as AGENTS.md §5 says. It is the `chat_transcript` submission and judges read it.
+- **Reply short.** Anar reads on a phone. A few lines of plain text, then this block at the very end of every reply:
+
+  ```text
+  STATUS
+  did: what changed, one line
+  numbers: samples status x/32 · step F1 0.xxx · exact x/32 | output: N INCOMPLETE / N COMPLETE / N NOT_APPLICABLE
+  changed: files touched
+  sketchy: anything uncertain, any assumption you made
+  q: one question, or "none"
+  ```
+
+- **Don't ask, decide.** For local work make the sensible call, state it under `sketchy`, move on. Ask only when the answer changes the result, and ask one thing.
+- **No secrets** in code, logs, reports, commits. API key only via env var or the uncommitted `.env`.
+- **No cheating.** Predictions use only files under `dataset/`. Never hardcode a case answer. `sample_output.csv` is the scorer, never a lookup table. Never edit `dataset/`.
+
+## Where things stand (2026-10-24)
+
+The engine exists and works. Do not rebuild it, improve it.
+
+| Thing | State |
+| --- | --- |
+| Sample score (32 labelled cases) | status 32/32 · step F1 0.990 · exact rows 29/32 · sequence 1.000 |
+| `output.csv` | 518 rows, valid, 355 INCOMPLETE / 153 COMPLETE / 10 NOT_APPLICABLE, 3,265 steps, run ≈ 2.5 s |
+| LLM usage in the last run | zero (no API key on this machine), rules decided intent |
+| Reports | `code/evaluation/evaluation_report.md` and `usage_report.md` exist and are current |
+| Remote | 5 commits on `origin/main`; later work is local until "go" |
+
+The 3 sample misses (case_04, case_18, case_20) need record IDs that appear in no participant file. Don't chase them.
 
 ## Repo layout
 
 ```text
-code/main.py                 entry point: python3 code/main.py -> writes ./output.csv
-code/...                     our modules (see Architecture)
-code/evaluation/main.py      scores our output vs dataset/sample_output.csv
-code/evaluation/evaluation_report.md   required deliverable
-code/evaluation/usage_report.md        required deliverable
-dataset/                     challenge data (never edit, never zip)
-output.csv                   final predictions (repo root)
-log.txt                      agent transcript (repo root)
+code/main.py                  python3 code/main.py  -> output.csv + usage_report.md   (--sample -> sample_predictions.csv)
+code/audit/evidence.py        parsers: SQL snapshots (primary + replicas), 6 log formats, JSON bundles, record histories, handover txt -> observations
+code/audit/media.py           screenshots + PDFs via cached text in code/cache/media/, focus record found through data_catalog links
+code/audit/identity.py        current + historical identifiers (user_identities.csv + user_audit_log.csv), lowercase emails, digit-only phones
+code/audit/jobs.py            ties deletion-job activity to cases when records carry no identifier (timing fingerprints, see Risks)
+code/audit/engine.py          state at audit_at -> policy (deletion_rules.csv) -> ordered steps
+code/audit/intent.py, llm.py  request intent: Claude (structured output, disk cache, token accounting) with multilingual rules as fallback
+code/evaluation/main.py       scorer vs dataset/sample_output.csv (--diff shows per-case misses)
+code/evaluation/custom_cases.py   our own 6 cases
+code/evaluation/usage.py      writes usage_report.md from the run's token counters
+code/tools/explain_case.py    everything the engine knows about one case; use it before guessing
+code/tools/extract_media.py   rebuilds the OCR/PDF text cache (macOS only; the cache is committed so runs work anywhere)
 ```
 
-## Strategy: deterministic first, LLM only where it pays
+Stdlib-only Python 3.10+. `anthropic` is optional (`.venv/` exists). Full run must stay offline-capable, deterministic, and fast.
 
-Score comes from exact steps, not prose. A deterministic engine gets ordering, evidence IDs and policy right every time; LLMs are used only for fuzzy inputs, and their results are cached so the full run is cheap and reproducible (that also makes `usage_report.md` look good).
+## Facts about the data we have verified
 
-| Problem | Approach |
-| --- | --- |
-| Does `request_text` authorize deletion? (many languages; access / export / correction / marketing opt-out = `NOT_APPLICABLE`) | Small LLM classifier (`claude-haiku-5-5`), JSON output, cached by text hash; keyword fallback when no API key. `CLASSIFY_REQUEST` "non-deletion" activities are a strong cross-check. |
-| PNG screenshots and PDFs in `evidence/images`, `evidence/documents` | Extract once into structured records (vision LLM or text extraction), cache to `code/cache/`, then treat like any other evidence. |
-| SQL snapshots | Load each `.sql` into in-memory SQLite; read every table. |
-| JSON records, logs, handover `.txt` | Plain parsers into one normalized observation table. |
-| Identity, timeline, policy, steps | Pure Python, no LLM. |
+- All 518 request emails resolve: 418 to a current email, 100 to a historical one in `user_audit_log.csv`. 850 users, 306 audit rows.
+- `reported_status` mix: 254 COMPLETE, 152 PARTIALLY_COMPLETE, 112 NOT_STARTED. Claims only.
+- Exactly 10 non-deletion requests (case_533–542, plain English: correction, access, export, marketing opt-out, login help). They match the 10 `CLASSIFY_REQUEST` rows in the activity stream. The 62 non-English requests (pt/es/fr/ja/ko, 5 templates) are all deletion requests.
+- 94 evidence files: 24 SQL, 26 logs, 29 JSON/txt records, 11 PNG, 4 PDF. Sample answers cite only `evidence_*` file IDs, never activity or audit IDs. Our output cites 65 of the 94 files; most uncited ones are sample-only files.
+- SQL snapshots hold `customer_profiles`, `customer_search_documents`, `customer_analytics_profiles`, `support_records`, `customer_exports`, `connector_subscriptions`, `backup_restore_entries` with `customer_reference` (= user_id), email, phone, email_hash. Primary and replica captures can disagree (replication drift).
+- `deletion_worker` activity rows name only resource IDs, never the person. Ownership comes from evidence contents, 12 `data_catalog` LINK_RESOURCE_IDENTITY rows, or job timing.
+- Decoys: near-identical emails (`g.silva76@` vs `g.silva76.jr@`), uppercase variants. Match exactly after lowercasing, never fuzzy.
+- Ownership is time-invariant (a capture after `audit_at` may prove who owns a record) but state comes only from captures at or before `audit_at`.
 
-## Architecture (pipeline)
+## Risks, in priority order
 
-1. **Load** all CSVs + evidence manifest. Parse every evidence file into normalized observations: `(evidence_id, captured_at, system_id, resource_id, data_category, identifiers{email, phone, name, email_hash, user_id}, state/fields)`.
-2. **Identity resolution** per case: request email -> `user_id` via `user_identities.csv` and historical values in `user_audit_log.csv` (old emails, phones, names, hashes). Compare case-insensitively and trimmed. Also follow `LINK_RESOURCE_IDENTITY` activities.
-3. **Discovery:** find every resource tied to the subject across activity + evidence (by user_id / customer_reference, any current or historical identifier, email hash, resource IDs that chain from those).
-4. **State at `audit_at`:** use only evidence/activity with time <= `audit_at`. Latest observed state wins. `reported_status` and `reported_result` are claims; a "SUCCESS" delete that later evidence shows still present is still present. Watch for SYNC / RESTORE_BACKUP / replication re-creating data after a delete.
-5. **Policy:** map each resource to a `data_category` and apply `deletion_rules.csv` (DELETE / REDACT / ANONYMIZE / RETAIN; `ACCOUNT_TOMBSTONE` keeps the `user_id` but no name/email/phone/email_hash).
-6. **Steps + status:** `COMPLETE` -> verification steps only, each citing the evidence that proves it. `INCOMPLETE` -> findings (cite evidence), remediation (empty `evidence_id`), verification (empty `evidence_id`). `NOT_APPLICABLE` -> `[]`.
-7. **Order:** phase (FINDING, REMEDIATION, VERIFICATION) -> operation order from the table in AGENTS.md §6.4 -> `system_id` -> `resource_id` (ascending). Renumber `step_no` from 1.
-8. **Write** `output.csv`: 518 rows sorted by `case_id`, header `case_id,deletion_status,steps_json`, deterministic JSON.
+1. **Job attribution (`jobs.py`)** links records to cases by second-level timing fingerprints of the deletion job. It is the cleverest and the shakiest part. We need to know how many of the 518 cases depend on it and how many of those were guesses, and whether real evidence can replace the guess.
+2. **No model calls yet.** `usage_report.md` shows $0. Either an API key arrives and Claude classifies intent (and ideally reads the 15 screenshots/PDFs instead of macOS OCR), or the reports explain honestly why the engine is deterministic.
+3. **Portability.** Judges run `python3 code/main.py` on Linux. Nothing may depend on macOS, `swift`, `pdftotext` or network at run time.
+4. **Explainability.** Anar explains this live in the AI interview. Keep modules small, names plain, docstrings honest. Prefer a simpler rule over a cleverer one at equal score.
+5. **Reports** must match the final run exactly (numbers, status mix, token counts).
 
-## Data gotchas already spotted
+## Hard rules for the engine
 
-- Decoy identities: near-identical emails (e.g. `g.silva76@...` vs `g.silva76.jr@...`) and UPPERCASE variants of real emails in evidence. Match exactly after lowercasing; never fuzzy-match emails.
-- Request email can be a historical address — resolve through the audit log.
-- `system_activity.csv` is global (4k rows, many unrelated users) and contains ~10 `data_catalog` rows that link resources to people.
-- Evidence comes in many origins (primary, read/regional/reporting/failover replicas). Replication drift: a record gone from primary can still sit in a replica.
-- The 32 samples contain no `NOT_APPLICABLE` cases, but the real 518 do. Don't overfit to samples.
-- Resource IDs are not zero-padded consistently (`account_001` vs `account_7566`); sort as plain strings unless samples prove otherwise.
-
-## Evaluation loop
-
-- `python3 code/evaluation/main.py` compares our output on the 32 sample cases with `dataset/sample_output.csv`: case-status accuracy, step-level and field-level accuracy, sequence accuracy, plus a per-case diff for every miss.
-- Add at least 3 custom test cases of our own (e.g. non-deletion request in another language, resurrection via sync after delete, tombstone with leftover email hash) and record them in `evaluation_report.md`.
-- Every fix: re-run eval, note the failure + fix in `evaluation_report.md`.
+- Findings and COMPLETE verifications cite the newest capture at or before `audit_at` that proves the state. Remediation and INCOMPLETE verifications use `""`.
+- Never cite a file captured after the case's `audit_at`.
+- COMPLETE only when every record has its required treatment, retained records are present, no flow or restore path is active.
+- Order: phase → operation order from AGENTS.md §6.4 → `system_id` → `resource_id` (numeric-aware). Renumber from 1.
+- Every run must pass the structural checks (header, 518 sorted rows, valid JSON, consecutive step_no, evidence time rule). Keep them in the evaluator.
+- After every engine change: `python3 code/evaluation/main.py --diff`, then `python3 code/evaluation/custom_cases.py`, then `python3 code/main.py`. Add a row to the "Failures found and improvements made" table in `evaluation_report.md` for every real fix.
 
 ## Commands
 
 ```bash
-python3 code/main.py
-python3 code/evaluation/main.py
+python3 code/main.py                        # 518 rows -> output.csv, rewrites usage_report.md
+python3 code/evaluation/main.py --diff      # sample score + per-case misses
+python3 code/evaluation/custom_cases.py     # our own cases
+python3 code/tools/explain_case.py case_35  # one case, all evidence
 zip -r code.zip README.md code -x "*/__pycache__/*" "*/.venv/*" "*/venv/*" "*/node_modules/*" "*/.git/*" "*/.DS_Store"
 ```
 
-## Submission checklist (only after Anar says "go")
+## Submission checklist (only when Anar says "go")
 
-- `output.csv`: exact header, 518 rows, sorted, valid JSON arrays, consecutive `step_no`.
-- `code.zip`: code, prompts, our own `README.md` (setup + run), both evaluation reports; no dataset, no caches, no nested archives, no secrets.
-- `log.txt` uploaded as `chat_transcript`; agent trace zipped per `agent_trace_instructions.md`.
+- `output.csv`: header `case_id,deletion_status,steps_json`, 518 rows sorted by case_id, valid JSON, consecutive step_no.
+- `code.zip`: code, prompts, README, both reports in `code/evaluation/`; no dataset, no `.venv`, no caches except `code/cache/media/` text, no nested archives, no secrets.
+- `log.txt` uploaded as `chat_transcript`; `agent-trace.zip` built per `agent_trace_instructions.md`.
 - Submission link: https://wwww.hackerrank.com/contests/hackerrank-orchestrate-october26/challenges/ghost-data-still-exists
