@@ -305,3 +305,38 @@ branch=main
 repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
 worktree=main
 parent_agent=none
+
+## [2026-10-24T15:27:55Z] SESSION START
+
+tool=Claude Code
+model=claude-fable-5-1
+Repo Root: /Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
+Branch: main
+Worktree: main
+Parent Agent: none
+Language: py
+Time Remaining: not configured
+
+## [2026-10-24T15:43:00Z] Risk map: how each case's account got linked
+
+User Prompt (verbatim, secrets redacted):
+read CLAUDE.md first. then run main.py and the evaluator and check the numbers in there still hold. after that i wanna know how much of the 518 actually rests on the timing trick in jobs.py. make a small script code/tools/risk_map.py that tags every case by how its account got linked - real identifier or catalog link, job match with one candidate, job match where the fingerprint picked between several, the closest-to-3540s fallback guess, or nothing at all - and prints counts per tag and per status plus the list of the guessed ones. then take 3 of the guessed cases, run explain_case on them and tell me straight if theres anything else in the data that could pin the account down. dont change the engine yet. commit the tool, no push.
+
+Agent Response Summary:
+Re-ran main.py, the evaluator and the custom cases; the CLAUDE.md numbers still hold (518 rows, 355/153/10, 3,265 steps, sample 32/32 status, F1 0.990, 29/32 exact, 6/6 custom). Added code/tools/risk_map.py, which replays JobLinker's account assignment, tags each case IDENTIFIER / SINGLE / FINGERPRINT / GUESS / NONE / NON_DELETION and checks its picks equal the engine's. Of 518: 238 identifier, 155 single, 77 fingerprint, 26 guess, 12 none, 10 non-deletion; no sample case uses the guess path. Explained case_56, case_59 and case_104: no evidence file names any candidate account, and order, lead time, identity-change timing and record-number checks carry no signal; only a finer callback clock (mod-60 phase alternating per callback, 48/50 right and 0 wrong on proven cases) helps, confirming 6 guessed cases, overturning 2 (case_404/case_406 swapped) and leaving 18 as true ties. Engine unchanged. The session model switched from claude-fable-5-1 to claude-opus-5-5 during this turn.
+
+Actions:
+* ran python3 code/main.py, code/evaluation/main.py --diff, code/evaluation/custom_cases.py
+* restored code/evaluation/usage_report.md (rerun only changed its timestamp and wall clock)
+* created code/tools/risk_map.py; ran it on evaluation and sample requests
+* ran code/tools/explain_case.py case_56 case_59 case_104 (plus partners case_58 case_60 case_106)
+* scratch analyses of timing, ordering and identifier links (scratchpad only, not committed)
+* git commit of code/tools/risk_map.py and log.txt, no push
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=main
+repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
+worktree=main
+parent_agent=none
