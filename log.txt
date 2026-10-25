@@ -569,3 +569,43 @@ branch=main
 repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
 worktree=main
 parent_agent=none
+
+## [2026-10-24T18:19:28Z] Stop for tonight; agent trace comes last
+
+User Prompt (verbatim, secrets redacted):
+no, the trace is the last thing we build after the final run. nothing more tonight
+
+Agent Response Summary:
+Agreed: agent-trace.zip is built only after the final run, and no further work tonight. Time remaining to the 2026-10-25 18:00 IST deadline at this entry: 18h 10m. This entry is left uncommitted; it goes in with the next commit.
+
+Actions:
+* appended this log entry
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=main
+repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
+worktree=main
+parent_agent=none
+
+## [2026-10-25T03:00:57Z] Interview notes for the AI interview
+
+User Prompt (verbatim, secrets redacted):
+before i submit i need to be able to explain this thing in a 30 min ai interview. write docs/interview_notes.md in plain simple english for me: what the agent does end to end, why the core is deterministic and where the model is used and why, how identity resolution works with the audit log, how job attribution works and why its needed since half the accounts have no identifier in the evidence, how we decide state at audit_at and the evidence citation rule, how the policy maps to steps and the ordering, how we evaluated (sample metrics, custom cases, structural checks, confidence tiers, clean room run), the token and cost numbers, and the known limits (16 ties, 5 cases with no visible account, 14 late seen search rows, the 3 sample misses). end with a list of likely judge questions with 2-3 line answers. no fluff. commit, no push
+
+Agent Response Summary:
+Wrote docs/interview_notes.md: pipeline end to end, deterministic core vs model use (intent and screenshot/PDF readings on gemini-3.5-flash-lite, cached, cross-checked), identity resolution with the audit log, job attribution (window, status mirror, batch elimination, half-minute clock and callback position, 59-minute fallback) with the confidence tiers, state at audit_at and the citation rule, policy-to-steps mapping and order, evaluation, tokens and cost, known limits, and 15 likely judge questions. Recounted the user's figures first: 5 cases without an account step (case_45, 52, 53, 61, 63) and 14 search rows seen only after audit_at both hold; "half the accounts" is 258 of 508 deletion cases linked only through the job. Added two facts for the interview: 163 of 254 reported-COMPLETE requests are incomplete, and 26 of 112 NOT_STARTED are complete. A scripted cross-check found all 15 headline figures in the notes equal to the live outputs. Time remaining to the deadline at this entry: 9h 29m.
+
+Actions:
+* recount scripts for cases without an account step, late-seen records, identity and job numbers, claimed vs audited status
+* created docs/interview_notes.md; ran code/tools/risk_map.py and code/evaluation/main.py offline to cross-check the figures
+* git commit, no push
+
+Context:
+tool=Claude Code
+model=claude-opus-5-5
+branch=main
+repo_root=/Users/aokiaspect/Documents/FOLDER4APPS/hackathon-thingy/solution
+worktree=main
+parent_agent=none
